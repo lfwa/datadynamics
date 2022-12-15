@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "collector"
+version = "0.1.0"
+description = "Simulation environment for data collection."
+authors = ["Lasse F. Wolff Anthony <lfwa@proton.me>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
