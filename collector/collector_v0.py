@@ -1,1 +1,1 @@
-from .env.collector import env
+from .environment.collector import env
