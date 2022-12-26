@@ -14,6 +14,7 @@ POINT_SIZE = 4
 PATH_SIZE = 2
 COLLECTOR_SIZE = 4
 COLLECTOR_LEN = 5
+FONT_SIZE = 20
 
 
 def env(**kwargs):
@@ -90,6 +91,7 @@ class raw_env(AECEnv):
         )
 
         # The following are set in reset().
+        self.iteration = 0
         self.points = None
         self.agent_selection = None
         self.has_reset = False
@@ -102,7 +104,7 @@ class raw_env(AECEnv):
         self.truncations = None
         self.infos = None
         self.collectors = None
-        # TODO: Add step count/frames/iterations?
+        self.cumulative_rewards = None
 
         # pygame
         self.screen = None
@@ -231,15 +233,17 @@ class raw_env(AECEnv):
             maximum[0],
             maximum[1],
         )
-        # Scale to fit within [a,b] while preserving aspect ratio.
-        b = screen_width * (1 - relative_padding)
-        a = screen_width * relative_padding
         x_range = x_max - x_min
         y_range = y_max - y_min
+        # Scale to fit within [a,b] while preserving aspect ratio.
         if x_range > y_range and x_range > 0:
+            b = screen_width * (1 - relative_padding)
+            a = screen_width * relative_padding
             scaling = (b - a) / x_range
             translation = -x_min * scaling + a
         elif y_range > 0:
+            b = screen_height * (1 - relative_padding)
+            a = screen_height * relative_padding
             scaling = (b - a) / y_range
             translation = -y_min * scaling + a
         else:
@@ -273,15 +277,17 @@ class raw_env(AECEnv):
         )
 
     def cheating_cost(self, point):
+        """Returns cost of cheating for a given point."""
         return self.cheat_cost * self.caught_probability
 
     def reward(self, collector, point):
+        """Returns reward for collecting a given point."""
         # Use Euclidean distance as initial cost.
-        reward = np.linalg.norm(collector.position - point.position)
+        cost = np.linalg.norm(collector.position - point.position)
         if point.is_collected():
-            reward += self.cheating_cost(point)
-        # Negate reward since we are using a cost-based model.
-        return -reward
+            cost += self.cheating_cost(point)
+        # Return negated cost as reward since we are using a cost-based model.
+        return -cost
 
     def _state(self, points, collectors):
         """Retrieve observation of the global environment."""
@@ -314,6 +320,7 @@ class raw_env(AECEnv):
         return self._state(self.points, self.collectors)
 
     def reset(self, seed=None, return_info=False, options=None):
+        """Resets the environment to a starting state."""
         if seed is not None:
             self.seed(seed)
 
@@ -328,6 +335,7 @@ class raw_env(AECEnv):
             self.point_positions, self.scaling, self.translation
         )
 
+        self.iteration = 0
         self.has_reset = True
         self.terminate = False
         self.truncate = False
@@ -336,6 +344,7 @@ class raw_env(AECEnv):
         self.terminations = {agent: False for agent in self.agents}
         self.truncations = {agent: False for agent in self.agents}
         self.infos = {agent: {} for agent in self.agents}
+        self.cumulative_rewards = {agent: 0 for agent in self.agents}
 
         obs = self._state(self.points, self.collectors)
         observations = {agent: obs for agent in self.agents}
@@ -346,6 +355,9 @@ class raw_env(AECEnv):
             return observations, self.infos
 
     def step(self, action):
+        """Advances the environment by one step for the current agent.
+
+        Automatically switches control to the next agent."""
         assert (
             self.has_reset
         ), "Environment has not been reset yet. Call env.reset() first."
@@ -374,7 +386,8 @@ class raw_env(AECEnv):
 
         self.rewards[agent] = reward
         self.agent_selection = self._agent_selector.next()
-        # TODO: Should we reset cumulative reward for agent?
+        self.cumulative_rewards[agent] += reward
+        # Cumulative reward since agent has last acted.
         self._cumulative_rewards[agent] = 0
         self._accumulate_rewards()
 
@@ -387,8 +400,10 @@ class raw_env(AECEnv):
 
         self.terminate = all(self.terminations.values())
         self.truncate = all(self.truncations.values())
+        self.iteration += 1
 
     def render(self):
+        """Renders the environment as specified by self.render_mode."""
         if self.render_mode is None:
             gymnasium.logger.warn(
                 (
@@ -442,24 +457,55 @@ class raw_env(AECEnv):
     def _render_text(self, surf):
         """Render info text."""
         # TODO: Render each text by itself since whole string will move around due to size differences in character length.
-        # FIXME: Replace placeholders!
-        # TODO: Number of times a collected has cheated is stored in the collector itself. Also stores unique points collected and total points.
-        font = pygame.font.Font(pygame.font.get_default_font(), 20)
+        (
+            stats,
+            overall_total_points_collected,
+            overall_unique_points_collected,
+            overall_cheated,
+        ) = self._get_stats()
+        total_reward = sum(self.cumulative_rewards.values())
+        font = pygame.font.Font(pygame.font.get_default_font(), FONT_SIZE)
         text1 = font.render(
-            f"Placeholder",
+            f"Iteration: {self.iteration} | Total points collected: {overall_total_points_collected} | Unique points collected: {overall_unique_points_collected} / {len(self.points)} | Cheated: {overall_cheated}",
             True,
             (0, 0, 0),
         )
         text2 = font.render(
-            f"Placeholder",
+            f"Total cumulative reward: {total_reward}",
             True,
             (0, 0, 0),
         )
         surf.blit(text1, (10, 10))
         surf.blit(text2, (10, 40))
 
+    def _get_stats(self):
+        """Get stats for all collectors."""
+        stats = {}
+        overall_total_points_collected = 0
+        overall_unique_points_collected = 0
+        overall_cheated = 0
+        for agent in self.collectors:
+            collector = self.collectors[agent]
+            stats[agent] = {
+                "total_points_collected": collector.total_points_collected,
+                "unique_points_collected": collector.unique_points_collected,
+                "cheated": collector.cheated,
+            }
+            overall_total_points_collected += collector.total_points_collected
+            overall_unique_points_collected += (
+                collector.unique_points_collected
+            )
+            overall_cheated += collector.cheated
+        return (
+            stats,
+            overall_total_points_collected,
+            overall_unique_points_collected,
+            overall_cheated,
+        )
+
     def _render_points(self, surf, points, point_size):
         """Render all points as circles"""
+        # TODO: Problem: Multiple collectors have taken the same path, only latest will be rendered!
         for point in points:
             pygame.draw.circle(
                 surf,
@@ -470,6 +516,7 @@ class raw_env(AECEnv):
 
     def _render_paths(self, surf, collectors, path_size):
         """Render paths taken between collections of points."""
+        # TODO: Problem: Multiple collectors have taken the same path, only latest will be rendered!
         for collector in collectors.values():
             for i in range(1, len(collector.points)):
                 pygame.draw.line(
