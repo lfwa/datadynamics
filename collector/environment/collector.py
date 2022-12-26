@@ -137,7 +137,7 @@ class raw_env(AECEnv):
                     dtype=np.float32,
                 ),
                 "collected": gymnasium.spaces.Box(
-                    low=0, high=np.inf, shape=(n_points,), dtype=np.int
+                    low=0, high=np.inf, shape=(n_points,), dtype=int
                 ),
                 "collector_positions": gymnasium.spaces.Box(
                     low=boundary_low, high=boundary_high, dtype=np.float32
@@ -194,7 +194,7 @@ class raw_env(AECEnv):
                         dtype=np.float32,
                     ),
                     "collected": gymnasium.spaces.Box(
-                        low=0, high=np.inf, shape=(n_points,), dtype=np.int
+                        low=0, high=np.inf, shape=(n_points,), dtype=int
                     ),
                     "collector_positions": gymnasium.spaces.Box(
                         low=boundary_low, high=boundary_high, dtype=np.float32
@@ -212,10 +212,16 @@ class raw_env(AECEnv):
         return observation_spaces
 
     def _compute_scaling_and_translation(
-        self, point_positions, agent_positions, screen_width, screen_height
+        self,
+        point_positions,
+        agent_positions,
+        screen_width,
+        screen_height,
+        relative_padding=0.1,
     ):
         """Compute scaling and translation to fit all points and agents on
         screen while preserving aspect ratio of data."""
+        assert 0 <= relative_padding < 1, "Relative padding must be in [0,1[."
         pos = np.concatenate((point_positions, agent_positions), axis=0)
         minimum = np.min(pos, axis=0)
         maximum = np.max(pos, axis=0)
@@ -225,14 +231,20 @@ class raw_env(AECEnv):
             maximum[0],
             maximum[1],
         )
+        # Scale to fit within [a,b] while preserving aspect ratio.
+        b = screen_width * (1 - relative_padding)
+        a = screen_width * relative_padding
         x_range = x_max - x_min
         y_range = y_max - y_min
-        if x_range > y_range:
-            scaling = screen_width / x_range
-            translation = -x_min * scaling
+        if x_range > y_range and x_range > 0:
+            scaling = (b - a) / x_range
+            translation = -x_min * scaling + a
+        elif y_range > 0:
+            scaling = (b - a) / y_range
+            translation = -y_min * scaling + a
         else:
-            scaling = screen_height / y_range
-            translation = -y_min * scaling
+            scaling = 1
+            translation = 0
         return scaling, translation
 
     def _create_collectors(
@@ -278,7 +290,7 @@ class raw_env(AECEnv):
                 [point.position for point in points], dtype=np.float32
             ),
             "collected": np.array(
-                [point.get_collect_counter() for point in points], dtype=np.int
+                [point.get_collect_counter() for point in points], dtype=int
             ),
             "collector_positions": np.array(
                 [collector.position for collector in collectors.values()],
