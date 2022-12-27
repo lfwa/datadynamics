@@ -584,10 +584,15 @@ class SamplingWrapperEnv(raw_env):
         ),
         **kwargs,
     ):
-        super().seed()
-        point_positions = sampler(self.rng, n_points)
+        super(SamplingWrapperEnv, self).seed()
+        assert n_agents > 0, "n_agents must be greater than 0"
+        assert n_points > 0, "n_points must be greater than 0"
+        self.n_agents = n_agents
+        self.n_points = n_points
+        self.sampler = sampler
+        point_positions = self.sampler(self.rng, self.n_points)
         point_mean = np.mean(point_positions, axis=0)
-        agent_positions = np.array([point_mean for _ in range(n_agents)])
+        agent_positions = np.array([point_mean for _ in range(self.n_agents)])
         super(SamplingWrapperEnv, self).__init__(
             point_positions=point_positions,
             agent_positions=agent_positions,
@@ -595,4 +600,18 @@ class SamplingWrapperEnv(raw_env):
             **kwargs,
         )
 
-    # TODO: Overwrite reset() to sample new points and agents.
+    def reset(self, resample=True, seed=None, return_info=False, options=None):
+        """Resets the environment to a starting state.
+
+        Resamples point and agent positions if resample is True."""
+        if resample:
+            point_positions = self.sampler(self.rng, self.n_points)
+            point_mean = np.mean(point_positions, axis=0)
+            agent_positions = np.array(
+                [point_mean for _ in range(self.n_agents)]
+            )
+            self.point_positions = point_positions
+            self.agent_positions = agent_positions
+        return super(SamplingWrapperEnv, self).reset(
+            seed=seed, return_info=return_info, options=options
+        )
