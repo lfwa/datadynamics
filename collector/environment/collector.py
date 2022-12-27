@@ -1,8 +1,8 @@
-from pettingzoo.utils.env import AECEnv
-from pettingzoo.utils import agent_selector
-import pygame
-import numpy as np
 import gymnasium
+import numpy as np
+import pygame
+from pettingzoo.utils import agent_selector
+from pettingzoo.utils.env import AECEnv
 
 from collector.utils.objects import Collector, Point
 

@@ -1,7 +1,7 @@
-from collector import collector_v0
-
-from pettingzoo.test import api_test
 import numpy as np
+from pettingzoo.test import api_test
+
+from collector import collector_v0
 
 
 def test_api():
@@ -13,7 +13,3 @@ def test_api():
         max_collect=[50, 80],
     )
     api_test(env, num_cycles=10, verbose_progress=True)
-
-
-if __name__ == "__main__":
-    test_api()
