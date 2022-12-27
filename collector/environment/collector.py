@@ -22,10 +22,6 @@ def env(**kwargs):
     return env
 
 
-# TODO: Create wrapper that takes n_agents, n_points and a sampler.
-# And wrapper that takes either.
-
-
 class raw_env(AECEnv):
     metadata = {
         "name": "collector",
@@ -570,3 +566,30 @@ class raw_env(AECEnv):
             pygame.display.quit()
             self.isopen = False
             pygame.quit()
+
+
+class SamplingWrapperEnv(raw_env):
+    """Wrapper that creates point and agent positions from sampler."""
+
+    def __init__(
+        self,
+        n_agents,
+        max_collect,
+        n_points,
+        sampler=lambda rng, n: rng.multivariate_normal(
+            np.array([0, 0]), np.array([[1, 0], [0, 1]]), n
+        ),
+        **kwargs,
+    ):
+        super().seed()
+        point_positions = sampler(self.rng, n_points)
+        point_mean = np.mean(point_positions, axis=0)
+        agent_positions = np.array([point_mean for _ in range(n_agents)])
+        super(SamplingWrapperEnv, self).__init__(
+            point_positions=point_positions,
+            agent_positions=agent_positions,
+            max_collect=max_collect,
+            **kwargs,
+        )
+
+    # TODO: Overwrite reset() to sample new points and agents.
