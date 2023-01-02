@@ -135,13 +135,13 @@ class raw_env(AECEnv):
                 "point_positions": gymnasium.spaces.Box(
                     low=point_boundary_low,
                     high=point_boundary_high,
-                    dtype=np.float32,
+                    dtype=np.float64,
                 ),
                 "collected": gymnasium.spaces.Box(
                     low=0, high=np.inf, shape=(n_points,), dtype=int
                 ),
                 "collector_positions": gymnasium.spaces.Box(
-                    low=boundary_low, high=boundary_high, dtype=np.float32
+                    low=boundary_low, high=boundary_high, dtype=np.float64
                 ),
                 "image": gymnasium.spaces.Box(
                     low=0,
@@ -192,13 +192,13 @@ class raw_env(AECEnv):
                     "point_positions": gymnasium.spaces.Box(
                         low=point_boundary_low,
                         high=point_boundary_high,
-                        dtype=np.float32,
+                        dtype=np.float64,
                     ),
                     "collected": gymnasium.spaces.Box(
                         low=0, high=np.inf, shape=(n_points,), dtype=int
                     ),
                     "collector_positions": gymnasium.spaces.Box(
-                        low=boundary_low, high=boundary_high, dtype=np.float32
+                        low=boundary_low, high=boundary_high, dtype=np.float64
                     ),
                     "image": gymnasium.spaces.Box(
                         low=0,
@@ -292,14 +292,14 @@ class raw_env(AECEnv):
         """Retrieve observation of the global environment."""
         state = {
             "point_positions": np.array(
-                [point.position for point in points], dtype=np.float32
+                [point.position for point in points], dtype=np.float64
             ),
             "collected": np.array(
                 [point.get_collect_counter() for point in points], dtype=int
             ),
             "collector_positions": np.array(
                 [collector.position for collector in collectors.values()],
-                dtype=np.float32,
+                dtype=np.float64,
             ),
             "image": self._render(render_mode="rgb_array"),
         }
