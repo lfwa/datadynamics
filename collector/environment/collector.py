@@ -365,6 +365,10 @@ class raw_env(AECEnv):
 
         if self.terminations[agent] or self.truncations[agent]:
             self._was_dead_step(action)
+            # Guard against first agent dying first since _was_dead_step()
+            # does not update agent_selection when that happens.
+            if self.agent_selection not in self.agents and self.agents:
+                self.agent_selection = self._agent_selector.next()
             return
 
         if not self.action_space(agent).contains(action):
