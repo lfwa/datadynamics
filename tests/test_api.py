@@ -1,15 +1,24 @@
 import numpy as np
+import pytest
 from pettingzoo.test import api_test
 
 from collector import collector_v0
 
 
-def test_api():
+@pytest.mark.parametrize(
+    "point_positions, agent_positions, max_collect",
+    [
+        (
+            np.array([[i, i] for i in range(100)]),
+            np.array([[0, 0], [1, 1]]),
+            [50, 80],
+        )
+    ],
+)
+def test_api(point_positions, agent_positions, max_collect):
     env = collector_v0.env(
-        point_positions=np.random.multivariate_normal(
-            np.array([0, 0]), np.array([[1, 0], [0, 1]]), 100
-        ),
-        agent_positions=np.array([[0.5, 0.5], [0.75, 0.75]]),
-        max_collect=[50, 80],
+        point_positions=point_positions,
+        agent_positions=agent_positions,
+        max_collect=max_collect,
     )
     api_test(env, num_cycles=10, verbose_progress=True)

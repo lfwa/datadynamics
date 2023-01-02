@@ -362,6 +362,7 @@ class raw_env(AECEnv):
         ), "Environment has not been reset yet. Call env.reset() first."
 
         agent = self.agent_selection
+
         if self.terminations[agent] or self.truncations[agent]:
             self._was_dead_step(action)
             return
@@ -371,24 +372,11 @@ class raw_env(AECEnv):
 
         point_to_collect = self.points[action]
         collector = self.collectors[agent]
-
         reward = self.reward(collector, point_to_collect)
-
         # Move collector to point position.
         collector.position = point_to_collect.position
-
         # Only collect point after reward has been calculated.
         collector.collect(point_to_collect)
-
-        if self.render_mode == "human":
-            self.render()
-
-        self.rewards[agent] = reward
-        self.agent_selection = self._agent_selector.next()
-        self.cumulative_rewards[agent] += reward
-        # Cumulative reward since agent has last acted.
-        self._cumulative_rewards[agent] = 0
-        self._accumulate_rewards()
 
         # Update termination and truncation for agent.
         if (
@@ -400,6 +388,17 @@ class raw_env(AECEnv):
         self.terminate = all(self.terminations.values())
         self.truncate = all(self.truncations.values())
         self.iteration += 1
+
+        self.rewards[agent] = reward
+        self.cumulative_rewards[agent] += reward
+        # Cumulative reward since agent has last acted.
+        self._cumulative_rewards[agent] = 0
+        self._accumulate_rewards()
+
+        self.agent_selection = self._agent_selector.next()
+
+        if self.render_mode == "human":
+            self.render()
 
     def render(self):
         """Renders the environment as specified by self.render_mode."""
@@ -572,7 +571,7 @@ class raw_env(AECEnv):
 
 
 class SamplingWrapperEnv(raw_env):
-    """Wrapper that creates point and agent positions from sampler."""
+    """Wrapper that creates point and agent positions from a sampler."""
 
     def __init__(
         self,
@@ -605,13 +604,11 @@ class SamplingWrapperEnv(raw_env):
 
         Resamples point and agent positions if resample is True."""
         if resample:
-            point_positions = self.sampler(self.rng, self.n_points)
-            point_mean = np.mean(point_positions, axis=0)
-            agent_positions = np.array(
+            self.point_positions = self.sampler(self.rng, self.n_points)
+            point_mean = np.mean(self.point_positions, axis=0)
+            self.agent_positions = np.array(
                 [point_mean for _ in range(self.n_agents)]
             )
-            self.point_positions = point_positions
-            self.agent_positions = agent_positions
         return super(SamplingWrapperEnv, self).reset(
             seed=seed, return_info=return_info, options=options
         )
