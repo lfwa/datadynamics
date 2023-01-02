@@ -113,8 +113,12 @@ class raw_env(AECEnv):
 
     def _create_boundary_arrays(self, array_2d, shape):
         """Create arrays with minimum and maximum with same shape as input."""
-        boundary_low = np.full(shape, np.min(array_2d, axis=0))
-        boundary_high = np.full(shape, np.max(array_2d, axis=0))
+        boundary_low = np.full(
+            shape, np.min(array_2d, axis=0), dtype=np.float64
+        )
+        boundary_high = np.full(
+            shape, np.max(array_2d, axis=0), dtype=np.float64
+        )
         return boundary_low, boundary_high
 
     def _get_state_space(
