@@ -11,6 +11,11 @@ repos:
     -   id: check-case-conflict
     -   id: check-merge-conflict
     -   id: debug-statements
+# Upgrade syntax to newer versions of Python.
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.3.1
+    hooks:
+    -   id: pyupgrade
 # Code formatter.
 -   repo: https://github.com/psf/black
     rev: 22.12.0
@@ -31,8 +36,3 @@ repos:
     -   id: poetry-lock
     -   id: poetry-export
         args: ["-f", "requirements.txt", "-o", "requirements.txt"]
-# Upgrade syntax to newer versions of Python.
--   repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
-    hooks:
-    -   id: pyupgrade
