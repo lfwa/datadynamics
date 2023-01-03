@@ -44,4 +44,5 @@ jobs:
         run: poetry install
 
       - name: Test
-        run: poetry run pytest ./tests/
+        shell: bash
+        run: ./scripts/test.sh
