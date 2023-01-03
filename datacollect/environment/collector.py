@@ -4,7 +4,7 @@ import pygame
 from pettingzoo.utils import agent_selector
 from pettingzoo.utils.env import AECEnv
 
-from collector.utils.objects import Collector, Point
+from datacollect.utils.objects import Collector, Point
 
 FPS = 120
 SCREEN_WIDTH = 1000

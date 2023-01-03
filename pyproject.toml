@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "collector"
+name = "datacollect"
 version = "0.1.0"
 description = "Simulation environment for data collection."
 authors = ["Lasse F. Wolff Anthony <lfwa@proton.me>"]
 readme = "README.md"
 license = "BSD-3-Clause"
-homepage = "https://github.com/lfwa/collector"
-repository = "https://github.com/lfwa/collector"
+homepage = "https://github.com/lfwa/datacollect"
+repository = "https://github.com/lfwa/datacollect"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"

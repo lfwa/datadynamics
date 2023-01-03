@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pettingzoo.test import api_test
 
-from collector import collector_v0
+from datacollect import collector_v0
 
 
 @pytest.mark.parametrize(

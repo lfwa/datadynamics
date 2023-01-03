@@ -1,6 +1,6 @@
 import numpy as np
 
-from collector.utils.colors import ColorPicker
+from datacollect.utils.colors import ColorPicker
 
 colorpicker = ColorPicker()
 

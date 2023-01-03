@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from collector import collector_v0
-from collector.policies import greedy_policy
+from datacollect import collector_v0
+from datacollect.policies import greedy_policy
 
 
 @pytest.mark.parametrize(

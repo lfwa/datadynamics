@@ -1,14 +1,14 @@
 import numpy as np
 
-from collector import collector_v0
-from collector.policies.dummy_policy import DummyPolicy
+from datacollect import collector_v0
+from datacollect.policies.dummy_policy import DummyPolicy
 
 
 def test_main():
     env = collector_v0.env(
         point_positions=np.random.uniform(0, 10, (100, 2)),
         agent_positions=np.array([[0.5, 0.5], [0.75, 0.75]]),
-        max_collect=[3, 10],
+        max_collect=[110, 102],
         render_mode="human",
     )
     policy = DummyPolicy(env)

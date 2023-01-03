@@ -1,7 +1,7 @@
 import numpy as np
 from pettingzoo.test import seed_test
 
-from collector import collector_v0
+from datacollect import collector_v0
 
 
 def test_seed():
