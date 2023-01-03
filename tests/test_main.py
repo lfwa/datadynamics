@@ -9,7 +9,7 @@ def test_main():
         point_positions=np.random.uniform(0, 10, (100, 2)),
         agent_positions=np.array([[0.5, 0.5], [0.75, 0.75]]),
         max_collect=[110, 102],
-        render_mode="human",
+        render_mode="rgb_array",
     )
     policy = DummyPolicy(env)
     env.reset()

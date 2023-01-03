@@ -14,7 +14,7 @@ The documentation is available at [\<PLACEHOLDER\>](https://github.com/lfwa/data
 \<PLACEHOLDER>
 
 ```bash
-pip install <PLACEHOLDER>
+pip install
 ```
 ## Getting Started
 \<PLACEHOLDER>
