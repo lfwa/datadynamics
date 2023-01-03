@@ -1,4 +1,5 @@
 repos:
+# Out-of-the-box hooks for pre-commit.
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -7,16 +8,22 @@ repos:
     -   id: check-yaml
     -   id: check-toml
     -   id: check-added-large-files
+    -   id: check-case-conflict
+    -   id: check-merge-conflict
+    -   id: debug-statements
+# Code formatter.
 -   repo: https://github.com/psf/black
     rev: 22.12.0
     hooks:
     -   id: black
         args: [--line-length, '79']
+# Sort imports.
 -   repo: https://github.com/pycqa/isort
     rev: 5.11.4
     hooks:
     -   id: isort
         args: ["--profile", "black", "--filter-files"]
+# Dependency managements.
 -   repo: https://github.com/python-poetry/poetry
     rev: 1.3.1
     hooks:
@@ -24,3 +31,8 @@ repos:
     -   id: poetry-lock
     -   id: poetry-export
         args: ["-f", "requirements.txt", "-o", "requirements.txt"]
+# Upgrade syntax to newer versions of Python.
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.3.1
+    hooks:
+    -   id: pyupgrade

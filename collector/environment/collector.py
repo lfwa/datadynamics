@@ -412,11 +412,9 @@ class raw_env(AECEnv):
         """Renders the environment as specified by self.render_mode."""
         if self.render_mode is None:
             gymnasium.logger.warn(
-                (
-                    f"No render mode specified, skipping render. Please "
-                    "specify render_mode as one of the supported modes "
-                    f"{self.metadata['render_modes']} at initialization."
-                )
+                f"No render mode specified, skipping render. Please "
+                "specify render_mode as one of the supported modes "
+                f"{self.metadata['render_modes']} at initialization."
             )
         else:
             return self._render(render_mode=self.render_mode)
@@ -591,7 +589,7 @@ class SamplingWrapperEnv(raw_env):
         ),
         **kwargs,
     ):
-        super(SamplingWrapperEnv, self).seed()
+        super().seed()
         assert n_agents > 0, "n_agents must be greater than 0"
         assert n_points > 0, "n_points must be greater than 0"
         self.n_agents = n_agents
@@ -600,7 +598,7 @@ class SamplingWrapperEnv(raw_env):
         point_positions = self.sampler(self.rng, self.n_points)
         point_mean = np.mean(point_positions, axis=0)
         agent_positions = np.array([point_mean for _ in range(self.n_agents)])
-        super(SamplingWrapperEnv, self).__init__(
+        super().__init__(
             point_positions=point_positions,
             agent_positions=agent_positions,
             max_collect=max_collect,
@@ -617,6 +615,6 @@ class SamplingWrapperEnv(raw_env):
             self.agent_positions = np.array(
                 [point_mean for _ in range(self.n_agents)]
             )
-        return super(SamplingWrapperEnv, self).reset(
+        return super().reset(
             seed=seed, return_info=return_info, options=options
         )
