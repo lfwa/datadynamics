@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "datacollect"
-version = "0.0.1"
+version = "0.0.0"
 description = "Simulation environment for data collection."
 authors = ["Lasse F. Wolff Anthony <lfwa@proton.me>"]
 readme = "README.md"
