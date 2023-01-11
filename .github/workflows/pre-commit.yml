@@ -26,3 +26,5 @@ jobs:
         uses: pre-commit/action@v3.0.0
       - uses: pre-commit-ci/lite-action@v1.0.0
         if: always()
+        env:
+          SKIP: poetry-lock,poetry-export
