@@ -9,7 +9,7 @@ homepage = "https://github.com/lfwa/datacollect"
 repository = "https://github.com/lfwa/datacollect"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.10,<=3.11"
 pettingzoo = "^1.22.2"
 pygame = "^2.1.2"
 numpy = "^1.23.5"
