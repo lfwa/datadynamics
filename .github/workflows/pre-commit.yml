@@ -11,16 +11,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10"]
         os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.x
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.x"
 
       - name: Set up pre-commit
         uses: pre-commit/action@v3.0.0
