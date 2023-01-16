@@ -9,7 +9,7 @@
 
 Datacollect is a Python library and environment for simulating multi-agent data collection. The library is built on top of [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) and is distributed under the [BSD 3-Clause License](LICENSE).
 
-The documentation is available at [\<PLACEHOLDER\>](https://github.com/lfwa/datacollect).
+The documentation is available at [lfwa.github.io/datacollect](https://lfwa.github.io/datacollect/).
 
 ## Installation
 \<PLACEHOLDER>
