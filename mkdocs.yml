@@ -1,0 +1,5 @@
+site_name: Datacollect
+site_url: https://example.com/
+
+theme:
+  name: material
