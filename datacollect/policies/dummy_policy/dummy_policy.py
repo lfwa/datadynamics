@@ -2,6 +2,7 @@ from itertools import cycle
 
 
 def policy(**kwargs):
+    """Create policy."""
     policy = DummyPolicy(**kwargs)
     return policy
 

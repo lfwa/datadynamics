@@ -2,6 +2,7 @@ import numpy as np
 
 
 def policy(**kwargs):
+    """Create policy."""
     policy = GreedyPolicy(**kwargs)
     return policy
 

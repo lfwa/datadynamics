@@ -18,6 +18,7 @@ FONT_SIZE = 20
 
 
 def env(**kwargs):
+    """Create environment."""
     if "n_points" in kwargs:
         env = SamplingWrapperEnv(**kwargs)
     else:
