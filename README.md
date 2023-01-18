@@ -17,5 +17,6 @@ The documentation is available at [lfwa.github.io/datacollect](https://lfwa.gith
 ```bash
 pip install
 ```
-## Getting Started
-\<PLACEHOLDER>
+## Quick Start
+
+https://github.com/lfwa/datacollect/blob/47745874a6e3ae45079c33e06e2816640e36c695/tutorials/example.py
