@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from datacollect import collector_v0
+from datacollect.environments import collector_v0
 from datacollect.policies import greedy_policy_v0
 
 

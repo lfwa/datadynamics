@@ -1,6 +1,6 @@
 import pytest
 
-from datacollect import collector_v0
+from datacollect.environments import collector_v0
 
 
 @pytest.mark.parametrize(

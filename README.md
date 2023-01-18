@@ -25,7 +25,7 @@ pip install
 
 ```python
 # See tutorials/example.py
-from datacollect import collector_v0
+from datacollect.environments import collector_v0
 from datacollect.policies import greedy_policy_v0
 
 env = collector_v0.env(

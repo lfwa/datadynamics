@@ -1,6 +1,6 @@
 import numpy as np
 
-from datacollect import collector_v0
+from datacollect.environments import collector_v0
 from datacollect.policies import dummy_policy_v0
 
 
