@@ -19,4 +19,4 @@ pip install
 ```
 ## Quick Start
 
-https://github.com/lfwa/datacollect/blob/47745874a6e3ae45079c33e06e2816640e36c695/tutorials/example.py
+https://github.com/lfwa/datacollect/blob/684c34ab97d4491cab9fe7060cfc19debbbfa7ac/tutorials/example.py#L1-L100
