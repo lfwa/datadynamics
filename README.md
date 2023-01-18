@@ -19,4 +19,18 @@ pip install
 ```
 ## Quick Start
 
-https://github.com/lfwa/datacollect/blob/684c34ab97d4491cab9fe7060cfc19debbbfa7ac/tutorials/example.py#L1-L12
+```python
+# See tutorials/example.py
+from datacollect import collector_v0
+from datacollect.policies import greedy_policy
+
+env = collector_v0.env(
+    n_points=100, n_agents=2, max_collect=[10, 90], render_mode="human"
+)
+policy = greedy_policy.GreedyPolicy(env=env)
+env.reset()
+for agent in env.agent_iter():
+    observation, reward, termination, truncation, info = env.last()
+    action = policy.action(observation, agent)
+    env.step(action)
+```
