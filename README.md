@@ -19,13 +19,17 @@ pip install
 ```
 ## Quick Start
 
+<p align="center">
+    <img src="datacollect.gif" width="350px"/>
+</p>
+
 ```python
 # See tutorials/example.py
 from datacollect import collector_v0
 from datacollect.policies import greedy_policy
 
 env = collector_v0.env(
-    n_points=100, n_agents=2, max_collect=[10, 90], render_mode="human"
+    n_points=300, n_agents=2, max_collect=[120, 180], render_mode="human"
 )
 policy = greedy_policy.GreedyPolicy(env=env)
 env.reset()
