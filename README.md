@@ -7,17 +7,23 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![License](https://img.shields.io/github/license/lfwa/datacollect)](https://github.com/lfwa/datacollect/blob/main/LICENSE)
 
-Datacollect is a Python library and environment for simulating multi-agent data collection. The library is built on top of [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) and is distributed under the [BSD 3-Clause License](LICENSE).
+Datacollect is a Python library and environment for simulating (multi-agent) data collection. The library is built on top of [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) and is distributed under the [BSD 3-Clause License](LICENSE).
 
 The documentation is available at [lfwa.github.io/datacollect](https://lfwa.github.io/datacollect/).
 
 ## Installation
-\<PLACEHOLDER>
+Datacollect can be installed via PyPI from Python 3.10 and higher:
 
-```bash
-pip install
+```console
+$ pip install datacollect
 ```
-## Quick Start
+
+Alternatively, you can install from source by downloading the [latest release](https://github.com/lfwa/datacollect/releases) or by cloning the [GitHub repository](https://github.com/lfwa/datacollect), navigating into the directory, and installing via [Poetry](https://python-poetry.org/): `poetry install`.
+
+## Usage
+Visit the documentation site at [lfwa.github.io/datacollect](https://lfwa.github.io/datacollect/) for full usage guides.
+
+### Quick Start
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/lfwa/datacollect/main/datacollect.gif" width="350px"/>
