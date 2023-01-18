@@ -20,7 +20,7 @@ pip install
 ## Quick Start
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lfwa/datacollect/main/datacollect.gif width="350px"/>
+    <img src="https://raw.githubusercontent.com/lfwa/datacollect/main/datacollect.gif" width="350px"/>
 </p>
 
 ```python
