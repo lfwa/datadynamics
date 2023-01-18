@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from datacollect import collector_v0
-from datacollect.policies import greedy_policy
+from datacollect.policies import greedy_policy_v0
 
 
 @pytest.mark.parametrize(
@@ -32,7 +32,7 @@ def test_api(
         caught_probability=caught_probability,
         render_mode="rgb_array",
     )
-    policy = greedy_policy.GreedyPolicy(env)
+    policy = greedy_policy_v0.policy(env=env)
     expected_action_first = 0
     expected_action_last = 1
     env.reset()

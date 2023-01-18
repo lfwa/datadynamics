@@ -1,6 +1,11 @@
 from itertools import cycle
 
 
+def policy(**kwargs):
+    policy = DummyPolicy(**kwargs)
+    return policy
+
+
 class DummyPolicy:
     """Dummy policy that cycles through all actions."""
 

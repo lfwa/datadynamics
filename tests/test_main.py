@@ -1,7 +1,7 @@
 import numpy as np
 
 from datacollect import collector_v0
-from datacollect.policies.dummy_policy import DummyPolicy
+from datacollect.policies import dummy_policy_v0
 
 
 def test_main():
@@ -11,7 +11,7 @@ def test_main():
         max_collect=[110, 102],
         render_mode="rgb_array",
     )
-    policy = DummyPolicy(env)
+    policy = dummy_policy_v0.policy(env=env)
     env.reset()
     for agent in env.agent_iter():
         observation, reward, termination, truncation, info = env.last()

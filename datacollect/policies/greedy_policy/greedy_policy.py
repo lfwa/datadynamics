@@ -1,6 +1,11 @@
 import numpy as np
 
 
+def policy(**kwargs):
+    policy = GreedyPolicy(**kwargs)
+    return policy
+
+
 class GreedyPolicy:
     """Locally optimal policy using a greedy approach.
 
