@@ -1,3 +1,5 @@
-# Simulation Environments API
+# Simulation Environments
 
-::: datacollect.environments
+::: datacollect.environments.collector.collector
+    options:
+        heading_level: 2
