@@ -15,6 +15,7 @@ pygame = "^2.1.2"
 numpy = "^1.23.5"
 gymnasium = "^0.27.0"
 matplotlib = "^3.6.3"
+networkx = {extras = ["default"], version = "^3.0"}
 
 
 [tool.poetry.group.dev.dependencies]
