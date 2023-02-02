@@ -62,7 +62,7 @@ class raw_env(AECEnv):
 
         self.reward_range = (-np.inf, 0)
 
-        self.agents = [f"agent_{i}" for i in range(len(agent_positions))]
+        self.agents = [f"agent_{i}" for i in range(len(self.agent_positions))]
         self.possible_agents = self.agents[:]
         self.agent_name_mapping = {
             agent: i for i, agent in enumerate(self.agents)
@@ -73,19 +73,19 @@ class raw_env(AECEnv):
         }
 
         self.scaling, self.translation = self._compute_scaling_and_translation(
-            point_positions, agent_positions, SCREEN_WIDTH, SCREEN_HEIGHT
+            self.point_positions,
+            self.agent_positions,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
         )
 
-        self.state_space = self._get_state_space(
-            agent_positions, point_positions, SCREEN_WIDTH, SCREEN_HEIGHT
-        )
         self.action_spaces = self._get_action_spaces(
-            self.agents, len(point_positions)
+            self.agents, len(self.point_positions)
         )
         self.observation_spaces = self._get_observation_spaces(
             self.agents,
-            agent_positions,
-            point_positions,
+            self.agent_positions,
+            self.point_positions,
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
         )
@@ -121,42 +121,6 @@ class raw_env(AECEnv):
             shape, np.max(array_2d, axis=0), dtype=np.float64
         )
         return boundary_low, boundary_high
-
-    def _get_state_space(
-        self, agent_positions, point_positions, screen_width, screen_height
-    ):
-        """Retrieve state space."""
-        n_points = point_positions.shape[0]
-        point_boundary_low, point_boundary_high = self._create_boundary_arrays(
-            point_positions, shape=(n_points, 2)
-        )
-        boundary_low, boundary_high = self._create_boundary_arrays(
-            np.concatenate((agent_positions, point_positions)),
-            shape=(len(agent_positions), 2),
-        )
-
-        state_space = gymnasium.spaces.Dict(
-            {
-                "point_positions": gymnasium.spaces.Box(
-                    low=point_boundary_low,
-                    high=point_boundary_high,
-                    dtype=np.float64,
-                ),
-                "collected": gymnasium.spaces.Box(
-                    low=0, high=np.inf, shape=(n_points,), dtype=int
-                ),
-                "collector_positions": gymnasium.spaces.Box(
-                    low=boundary_low, high=boundary_high, dtype=np.float64
-                ),
-                "image": gymnasium.spaces.Box(
-                    low=0,
-                    high=255,
-                    shape=(screen_width, screen_height, 3),
-                    dtype=np.uint8,
-                ),
-            }
-        )
-        return state_space
 
     def _get_action_spaces(self, agents, n_points):
         """Retrieve action spaces for all agents.
@@ -436,9 +400,6 @@ class raw_env(AECEnv):
         # Add white background.
         self.surf.fill((255, 255, 255))
 
-        # TODO: All collectors and paths are rendered even for inactive
-        # agents. Should this happen? Or should we render inactive agents
-        # differently?
         self._render_points(self.surf, self.points, POINT_SIZE)
         self._render_paths(self.surf, self.collectors, PATH_SIZE)
         self._render_collectors(
