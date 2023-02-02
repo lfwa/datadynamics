@@ -89,6 +89,12 @@ class raw_env(AECEnv):
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
         )
+        self.state_space = self._get_state_space(
+            self.agent_positions,
+            self.point_positions,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+        )
 
         # The following are set in reset().
         self.iteration = 0
@@ -122,6 +128,43 @@ class raw_env(AECEnv):
         )
         return boundary_low, boundary_high
 
+    def _create_obs_state_space(
+        self, agent_positions, point_positions, screen_width, screen_height
+    ):
+        """Get global observation/state space."""
+        n_points = point_positions.shape[0]
+        point_boundary_low, point_boundary_high = self._create_boundary_arrays(
+            point_positions, shape=(n_points, 2)
+        )
+        boundary_low, boundary_high = self._create_boundary_arrays(
+            np.concatenate((agent_positions, point_positions)),
+            shape=(len(agent_positions), 2),
+        )
+
+        space = gymnasium.spaces.Dict(
+            {
+                "point_positions": gymnasium.spaces.Box(
+                    low=point_boundary_low,
+                    high=point_boundary_high,
+                    dtype=np.float64,
+                ),
+                "collected": gymnasium.spaces.Box(
+                    low=0, high=np.inf, shape=(n_points,), dtype=int
+                ),
+                "collector_positions": gymnasium.spaces.Box(
+                    low=boundary_low, high=boundary_high, dtype=np.float64
+                ),
+                "image": gymnasium.spaces.Box(
+                    low=0,
+                    high=255,
+                    shape=(screen_width, screen_height, 3),
+                    dtype=np.uint8,
+                ),
+            }
+        )
+
+        return space
+
     def _get_action_spaces(self, agents, n_points):
         """Retrieve action spaces for all agents.
 
@@ -146,40 +189,22 @@ class raw_env(AECEnv):
         agent (incl. inactive) positions, and an image of the environment.
         Note that these are identical for all agents.
         """
-        n_points = point_positions.shape[0]
-        point_boundary_low, point_boundary_high = self._create_boundary_arrays(
-            point_positions, shape=(n_points, 2)
-        )
-        boundary_low, boundary_high = self._create_boundary_arrays(
-            np.concatenate((agent_positions, point_positions)),
-            shape=(len(agents), 2),
-        )
-
         observation_spaces = {
-            agent: gymnasium.spaces.Dict(
-                {
-                    "point_positions": gymnasium.spaces.Box(
-                        low=point_boundary_low,
-                        high=point_boundary_high,
-                        dtype=np.float64,
-                    ),
-                    "collected": gymnasium.spaces.Box(
-                        low=0, high=np.inf, shape=(n_points,), dtype=int
-                    ),
-                    "collector_positions": gymnasium.spaces.Box(
-                        low=boundary_low, high=boundary_high, dtype=np.float64
-                    ),
-                    "image": gymnasium.spaces.Box(
-                        low=0,
-                        high=255,
-                        shape=(screen_width, screen_height, 3),
-                        dtype=np.uint8,
-                    ),
-                }
+            agent: self._create_obs_state_space(
+                agent_positions, point_positions, screen_width, screen_height
             )
             for agent in agents
         }
         return observation_spaces
+
+    def _get_state_space(
+        self, agent_positions, point_positions, screen_width, screen_height
+    ):
+        """Retrieve state space."""
+        state_space = self._create_obs_state_space(
+            agent_positions, point_positions, screen_width, screen_height
+        )
+        return state_space
 
     def _compute_scaling_and_translation(
         self,
