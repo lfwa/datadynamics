@@ -7,7 +7,7 @@ from datacollect.policies import dummy_policy_v0
 def test_main():
     env = collector_v0.env(
         point_positions=np.random.uniform(0, 10, (100, 2)),
-        agent_positions=np.array([[0.5, 0.5], [0.75, 0.75]]),
+        init_agent_positions=np.array([[0.5, 0.5], [0.75, 0.75]]),
         max_collect=[110, 102],
         render_mode="rgb_array",
     )

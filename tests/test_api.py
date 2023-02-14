@@ -6,7 +6,7 @@ from datacollect.environments import collector_v0
 
 
 @pytest.mark.parametrize(
-    "point_positions, agent_positions, max_collect",
+    "point_positions, init_agent_positions, max_collect",
     [
         (
             np.array([[i, i] for i in range(100)]),
@@ -15,10 +15,10 @@ from datacollect.environments import collector_v0
         )
     ],
 )
-def test_api(point_positions, agent_positions, max_collect):
+def test_api(point_positions, init_agent_positions, max_collect):
     env = collector_v0.env(
         point_positions=point_positions,
-        agent_positions=agent_positions,
+        init_agent_positions=init_agent_positions,
         max_collect=max_collect,
     )
     api_test(env, num_cycles=10, verbose_progress=True)

@@ -18,7 +18,11 @@ FONT_SIZE = 20
 
 
 def env(**kwargs):
-    """Create environment."""
+    """Creates a collector environment.
+
+    Returns:
+        pettingzoo.utils.env.AECEnv: Created environment.
+    """
     if "n_points" in kwargs:
         env = SamplingWrapperEnv(**kwargs)
     else:
@@ -27,6 +31,16 @@ def env(**kwargs):
 
 
 class raw_env(AECEnv):
+    """Raw collector environment.
+
+    This environment is based on a 2D plane. Points are given by their (x, y)
+    coordinates and each agent defines a `collector` that can move around the
+    plane and collect points.
+
+    Attributes:
+        See AECEnv.
+    """
+
     metadata = {
         "name": "collector",
         "render_modes": ["rgb_array", "human"],
@@ -37,12 +51,34 @@ class raw_env(AECEnv):
     def __init__(
         self,
         point_positions,
-        agent_positions,
+        init_agent_positions,
         max_collect,
         cheat_cost=500,
         caught_probability=0.5,
         render_mode=None,
     ):
+        """Initialize environment.
+
+        Args:
+            point_positions (np.ndarray): Positions of collectible points as a
+                numpy array with shape (n, 2) representing n (x, y)
+                coordinates.
+            init_agent_positions (np.ndarray): Initial positions of n agents
+                as a numpy array with shape (n, 2) representing n (x, y)
+                coordinates.
+            max_collect (list): List of maximum number of points that each
+                agent can collect. Index i corresponds to agent i given by
+                init_agent_positions.
+            cheat_cost (int, optional): Cost of cheating by collecting an
+                already collected point. Influences reward for collecting
+                points. Defaults to 500.
+            caught_probability (float, optional): Probability of getting
+                caught cheating. Influences reward for collecting points.
+                Defaults to 0.5.
+            render_mode (str, optional): Render mode. Supported modes are
+                specified in environment's metadata["render_modes"] dict.
+                Defaults to None.
+        """
         assert (
             render_mode in self.metadata["render_modes"] or render_mode is None
         ), (
@@ -52,10 +88,8 @@ class raw_env(AECEnv):
 
         self.seed()
 
-        # Positions should be a np.ndarray w. shape (n, 2) representing
-        # n (x, y) coordinates.
         self.point_positions = point_positions
-        self.agent_positions = agent_positions
+        self.agent_positions = init_agent_positions
         self.render_mode = render_mode
         self.cheat_cost = cheat_cost
         self.caught_probability = caught_probability
@@ -118,8 +152,16 @@ class raw_env(AECEnv):
         self.surf = None
         self.isopen = False
 
-    def _create_boundary_arrays(self, array_2d, shape):
-        """Create arrays with minimum and maximum with same shape as input."""
+    def _get_boundary_arrays(self, array_2d, shape):
+        """Creates arrays with minimum and maximum with same shape as input.
+
+        Args:
+            array_2d (np.ndarray): Input array to find minimum and maximum.
+            shape (_type_): Tuple with shape of output arrays.
+
+        Returns:
+            np.ndarray: Boundary arrays with minimum and maximum.
+        """
         boundary_low = np.full(
             shape, np.min(array_2d, axis=0), dtype=np.float64
         )
@@ -128,15 +170,25 @@ class raw_env(AECEnv):
         )
         return boundary_low, boundary_high
 
-    def _create_obs_state_space(
+    def _get_obs_state_space(
         self, agent_positions, point_positions, screen_width, screen_height
     ):
-        """Get global observation/state space."""
+        """Retrieves global observation/state space.
+
+        Args:
+            agent_positions (np.ndarray): Agent positions.
+            point_positions (np.ndarray): Point positions.
+            screen_width (int): Width of display screen.
+            screen_height (int): Height of display screen.
+
+        Returns:
+            gymnasium.spaces.Dict: Dict space with global observation/state.
+        """
         n_points = point_positions.shape[0]
-        point_boundary_low, point_boundary_high = self._create_boundary_arrays(
+        point_boundary_low, point_boundary_high = self._get_boundary_arrays(
             point_positions, shape=(n_points, 2)
         )
-        boundary_low, boundary_high = self._create_boundary_arrays(
+        boundary_low, boundary_high = self._get_boundary_arrays(
             np.concatenate((agent_positions, point_positions)),
             shape=(len(agent_positions), 2),
         )
@@ -166,9 +218,16 @@ class raw_env(AECEnv):
         return space
 
     def _get_action_spaces(self, agents, n_points):
-        """Retrieve action spaces for all agents.
+        """Retrieves action spaces for all agents.
 
         Each action is a point to collect (by index).
+
+        Args:
+            agents (list[str]): List of agent names.
+            n_points (int): Number of points.
+
+        Returns:
+            dict: Dictionary of discrete action spaces.
         """
         action_spaces = {
             agent: gymnasium.spaces.Discrete(n_points) for agent in agents
@@ -183,14 +242,26 @@ class raw_env(AECEnv):
         screen_width,
         screen_height,
     ):
-        """Retrieve observation spaces for all agents.
+        """Retrieves observation spaces for all agents.
 
         Each observation consist of the point positions, points collected,
         agent (incl. inactive) positions, and an image of the environment.
-        Note that these are identical for all agents.
+
+        Note:
+            These are identical for all agents.
+
+        Args:
+            agents (list[str]): List of agent names.
+            agent_positions (np.ndarray): Agent positions.
+            point_positions (np.ndarray): Point positions.
+            screen_width (int): Width of display screen.
+            screen_height (int): Height of display screen.
+
+        Returns:
+            dict: Dictionary of observation spaces keyed by agent name.
         """
         observation_spaces = {
-            agent: self._create_obs_state_space(
+            agent: self._get_obs_state_space(
                 agent_positions, point_positions, screen_width, screen_height
             )
             for agent in agents
@@ -200,8 +271,18 @@ class raw_env(AECEnv):
     def _get_state_space(
         self, agent_positions, point_positions, screen_width, screen_height
     ):
-        """Retrieve state space."""
-        state_space = self._create_obs_state_space(
+        """Retrieves state space.
+
+        Args:
+            agent_positions (np.ndarray): Agent positions.
+            point_positions (np.ndarray): Point positions.
+            screen_width (int): Width of display screen.
+            screen_height (int): Height of display screen.
+
+        Returns:
+            gymnasium.spaces.Dict: State space.
+        """
+        state_space = self._get_obs_state_space(
             agent_positions, point_positions, screen_width, screen_height
         )
         return state_space
@@ -214,8 +295,21 @@ class raw_env(AECEnv):
         screen_height,
         relative_padding=0.1,
     ):
-        """Compute scaling and translation to fit all points and agents on
-        screen while preserving aspect ratio of data."""
+        """Computes scaling and translation to fit points and agents on screen.
+
+        Preserves aspect ratio of data.
+
+        Args:
+            point_positions (np.ndarray): Point positions.
+            agent_positions (np.ndarray): Agent positions.
+            screen_width (int): Width of display screen.
+            screen_height (int): Height of display screen.
+            relative_padding (float, optional): Outside padding.
+                Defaults to 0.1.
+
+        Returns:
+            tuple(float, float): Scaling and translation as a tuple.
+        """
         assert 0 <= relative_padding < 1, "Relative padding must be in [0,1[."
         pos = np.concatenate((point_positions, agent_positions), axis=0)
         minimum = np.min(pos, axis=0)
@@ -247,7 +341,17 @@ class raw_env(AECEnv):
     def _create_collectors(
         self, agent_positions, agents, scaling, translation
     ):
-        """Create collectors for all agents as a dict."""
+        """Creates collector for each agent as a dict.
+
+        Args:
+            agent_positions (np.ndarray): Agent positions.
+            agents (list[str]): List of agent names.
+            scaling (float): Scaling factor for displaying.
+            translation (float): Translation factor for displaying.
+
+        Returns:
+            dict: Dictionary of collectors keyed by agent name.
+        """
         collectors = {
             agent: Collector(position, scaling, translation)
             for agent, position in zip(agents, agent_positions)
@@ -255,7 +359,16 @@ class raw_env(AECEnv):
         return collectors
 
     def _create_points(self, point_positions, scaling, translation):
-        """Create points for all given positions."""
+        """Creates points for all given positions.
+
+        Args:
+            point_positions (np.ndarray): Point positions.
+            scaling (float): Scaling factor for displaying.
+            translation (float): Translation factor for displaying.
+
+        Returns:
+            list[Point]: List of points.
+        """
         points = [
             Point(position, scaling, translation)
             for position in point_positions
@@ -263,27 +376,62 @@ class raw_env(AECEnv):
         return points
 
     def _create_image_array(self, surf, size):
-        """Create image (numpy) array from pygame surface."""
+        """Returns image array from pygame surface.
+
+        Args:
+            surf (pygame.Surface): Surface to convert to image array.
+            size (tuple): Tuple of (width, height) to scale surface to.
+
+        Returns:
+            np.ndarray: Image array.
+        """
         scaled_surf = pygame.transform.smoothscale(surf, size)
         return np.transpose(
             np.array(pygame.surfarray.pixels3d(scaled_surf)), axes=(1, 0, 2)
         )
 
     def cheating_cost(self, point):
-        """Returns cost of cheating for a given point."""
+        """Cost of cheating by collecting an already collected point.
+
+        Args:
+            point (Point): Point for which to compute cheating cost.
+
+        Returns:
+            float: Cost of cheating.
+        """
         return self.cheat_cost * self.caught_probability
 
     def reward(self, collector, point):
-        """Returns reward for collecting a given point."""
-        # Use Euclidean distance as initial cost.
+        """Returns reward for collecting a given point.
+
+        If point has already been collected, we add a cost for cheating.
+        The reward/cost is based on the Euclidean distance.
+
+        Note:
+            We use a cost-based model, so the reward is the negated cost.
+
+        Args:
+            collector (Collector): Collector that collected the point.
+            point (Point): Point that is collected.
+
+        Returns:
+            float: Reward.
+        """
         cost = np.linalg.norm(collector.position - point.position)
         if point.is_collected():
             cost += self.cheating_cost(point)
-        # Return negated cost as reward since we are using a cost-based model.
         return -cost
 
     def _state(self, points, collectors):
-        """Retrieve observation of the global environment."""
+        """Retrieves state of the current global environment.
+
+        Args:
+            points (list[Point]): List of points in the environment.
+            collectors (dict): Dictionary of collectors.
+
+        Returns:
+            dict: Current global state.
+        """
         state = {
             "point_positions": np.array(
                 [point.position for point in points], dtype=np.float64
@@ -300,20 +448,17 @@ class raw_env(AECEnv):
         return state
 
     def observe(self, agent):
-        """Returns the observation an agent currently can make.
-
-        This is identical for all agents.
-        """
-        # TODO: Warning for api_test /Users/lfwa/Library/Caches/pypoetry/virtualenvs/collector-gjPrMD7k-py3.10/lib/python3.10/site-packages/pettingzoo/test/api_test.py:60: UserWarning: Observation is not NumPy array
+        # FIXME: Warning for api_test /Users/lfwa/Library/Caches/pypoetry/
+        # virtualenvs/collector-gjPrMD7k-py3.10/lib/python3.10/site-packages/
+        # pettingzoo/test/api_test.py:60: UserWarning: Observation is not
+        # NumPy array
         # warnings.warn("Observation is not NumPy array")
         return self._state(self.points, self.collectors)
 
     def state(self):
-        """Returns a global view of the environment."""
         return self._state(self.points, self.collectors)
 
     def reset(self, seed=None, return_info=False, options=None):
-        """Resets the environment to a starting state."""
         if seed is not None:
             self.seed(seed)
 
@@ -348,9 +493,6 @@ class raw_env(AECEnv):
             return observations, self.infos
 
     def step(self, action):
-        """Advances the environment by one step for the current agent.
-
-        Automatically switches control to the next agent."""
         assert (
             self.has_reset
         ), "Environment has not been reset yet. Call env.reset() first."
@@ -365,16 +507,22 @@ class raw_env(AECEnv):
                 self.agent_selection = self._agent_selector.next()
             return
 
-        if not self.action_space(agent).contains(action):
+        if (
+            not self.action_space(agent).contains(action)
+            and action is not None
+        ):
             raise ValueError(f"Action {action} is invalid for agent {agent}.")
 
-        point_to_collect = self.points[action]
-        collector = self.collectors[agent]
-        reward = self.reward(collector, point_to_collect)
-        # Move collector to point position.
-        collector.position = point_to_collect.position
-        # Only collect point after reward has been calculated.
-        collector.collect(point_to_collect)
+        if action is not None:
+            point_to_collect = self.points[action]
+            collector = self.collectors[agent]
+            reward = self.reward(collector, point_to_collect)
+            # Move collector to point position.
+            collector.move(point_to_collect.position)
+            # Only collect point after reward has been calculated.
+            collector.collect(point_to_collect)
+        else:
+            reward = 0
 
         # Update termination and truncation for agent.
         if (
@@ -399,7 +547,6 @@ class raw_env(AECEnv):
             self.render()
 
     def render(self):
-        """Renders the environment as specified by self.render_mode."""
         if self.render_mode is None:
             gymnasium.logger.warn(
                 f"No render mode specified, skipping render. Please "
@@ -410,6 +557,15 @@ class raw_env(AECEnv):
             return self._render(render_mode=self.render_mode)
 
     def _render(self, render_mode):
+        """Renders the environment.
+
+        Args:
+            render_mode (str): One of the supported render modes.
+
+        Returns:
+            np.ndarray or None: Returns the rendered image if render_mode is
+                `rgb_array`, otherwise returns None.
+        """
         pygame.font.init()
         if self.screen is None and render_mode == "human":
             pygame.init()
@@ -446,8 +602,13 @@ class raw_env(AECEnv):
             )
 
     def _render_text(self, surf):
-        """Render info text."""
-        # TODO: Render each text by itself since whole string will move around due to size differences in character length.
+        """Renders information text, e.g. stats about environment and actions.
+
+        Args:
+            surf (pygame.Surface): Surface to render text on.
+        """
+        # TODO: Render each text by itself since whole string will move around
+        # due to size differences in character length.
         (
             stats,
             overall_total_points_collected,
@@ -457,7 +618,13 @@ class raw_env(AECEnv):
         total_reward = sum(self.cumulative_rewards.values())
         font = pygame.font.Font(pygame.font.get_default_font(), FONT_SIZE)
         text1 = font.render(
-            f"Iteration: {self.iteration} | Total points collected: {overall_total_points_collected} | Unique points collected: {overall_unique_points_collected} / {len(self.points)} | Cheated: {overall_cheated}",
+            (
+                f"Iteration: {self.iteration} | "
+                f"Total points collected: {overall_total_points_collected} | "
+                "Unique points collected: "
+                f"{overall_unique_points_collected} / {len(self.points)} | "
+                f"Cheated: {overall_cheated}"
+            ),
             True,
             (0, 0, 0),
         )
@@ -470,7 +637,11 @@ class raw_env(AECEnv):
         surf.blit(text2, (10, 40))
 
     def _get_stats(self):
-        """Get stats for all collectors."""
+        """Retrieves stats for all collectors.
+
+        Returns:
+            tuple: Tuple of stats.
+        """
         stats = {}
         overall_total_points_collected = 0
         overall_unique_points_collected = 0
@@ -495,8 +666,15 @@ class raw_env(AECEnv):
         )
 
     def _render_points(self, surf, points, point_size):
-        """Render all points as circles"""
-        # TODO: Problem: Multiple collectors have taken the same path, only latest will be rendered!
+        """Renders all points as circles.
+
+        Args:
+            surf (pygame.Surface): Surface to render points on.
+            points (list[Points]): List of points to render.
+            point_size (int): Render size of points.
+        """
+        # FIXME: Multiple collectors have taken the same path, only latest
+        # will be rendered!
         for point in points:
             pygame.draw.circle(
                 surf,
@@ -506,8 +684,15 @@ class raw_env(AECEnv):
             )
 
     def _render_paths(self, surf, collectors, path_size):
-        """Render paths taken between collections of points."""
-        # TODO: Problem: Multiple collectors have taken the same path, only latest will be rendered!
+        """Renders paths taken between collections of points.
+
+        Args:
+            surf (pygame.Surface): Surface to render paths on.
+            collectors (dict): Dict of collectors.
+            path_size (int): Render size of paths.
+        """
+        # FIXME: Multiple collectors have taken the same path, only latest
+        # will be rendered!
         for collector in collectors.values():
             for i in range(1, len(collector.points)):
                 pygame.draw.line(
@@ -521,7 +706,15 @@ class raw_env(AECEnv):
     def _render_collectors(
         self, surf, collectors, collector_len, collector_size
     ):
-        """Render all collectors as crosses."""
+        """Renders all collectors as crosses.
+
+        Args:
+            surf (pygame.Surface): Surface to render collectors on.
+            collectors (dict): Dict of collectors.
+            collector_len (int): Length of collector cross.
+            collector_size (int): Size of collector cross.
+        """
+        # FIXME: What if collectors overlap? Then only latest will be rendered!
         for collector in collectors.values():
             pygame.draw.line(
                 surf,
@@ -556,7 +749,6 @@ class raw_env(AECEnv):
         return [seed]
 
     def close(self):
-        """Close pygame display if exists."""
         if self.screen is not None:
             pygame.display.quit()
             self.isopen = False
@@ -564,7 +756,11 @@ class raw_env(AECEnv):
 
 
 class SamplingWrapperEnv(raw_env):
-    """Wrapper that creates point and agent positions from a sampler."""
+    """Wrapper that creates point and agent positions from a sampler.
+
+    Attributes:
+        See AECEnv.
+    """
 
     def __init__(
         self,
@@ -576,6 +772,19 @@ class SamplingWrapperEnv(raw_env):
         ),
         **kwargs,
     ):
+        """Initialize wrapper environment.
+
+        Args:
+            n_agents (int): Number of agents to create.
+            max_collect (list[int]): List of maximum number of points to
+                collect for each agent.
+            n_points (int): Number of points to generate.
+            sampler (lambda, optional): Lambda function from which n points
+                are generated. Should accept an argument `rng` representing a
+                random generator (rng, e.g. numpy default_rng) and `n`
+                representing number of points to generate. Defaults to a 2D
+                standard Normal distribution.
+        """
         super().seed()
         assert n_agents > 0, "n_agents must be greater than 0"
         assert n_points > 0, "n_points must be greater than 0"
@@ -584,10 +793,12 @@ class SamplingWrapperEnv(raw_env):
         self.sampler = sampler
         point_positions = self.sampler(self.rng, self.n_points)
         point_mean = np.mean(point_positions, axis=0)
-        agent_positions = np.array([point_mean for _ in range(self.n_agents)])
+        init_agent_positions = np.array(
+            [point_mean for _ in range(self.n_agents)]
+        )
         super().__init__(
             point_positions=point_positions,
-            agent_positions=agent_positions,
+            init_agent_positions=init_agent_positions,
             max_collect=max_collect,
             **kwargs,
         )
@@ -595,7 +806,19 @@ class SamplingWrapperEnv(raw_env):
     def reset(self, resample=True, seed=None, return_info=False, options=None):
         """Resets the environment to a starting state.
 
-        Resamples point and agent positions if resample is True."""
+        Args:
+            resample (bool, optional): Whether to resample point and agent
+                positions between resets. Defaults to True.
+            seed (int, optional): Random seed to use for resetting. Defaults
+                to None.
+            return_info (bool, optional): Whether to return infos. Defaults to
+                False.
+            options (dict, optional): Additional options. Defaults to None.
+
+        Returns:
+            dict: Dictionary of observations for each agent. Infos are
+                returned if `return_info` is True.
+        """
         if resample:
             self.point_positions = self.sampler(self.rng, self.n_points)
             point_mean = np.mean(self.point_positions, axis=0)

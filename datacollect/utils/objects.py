@@ -6,22 +6,50 @@ colorpicker = ColorPicker()
 
 
 class Position:
+    """Object that represents a position in the environment.
+
+    The object also contains information about scaling, translation to fit on
+    displays as well as a color, label, and whether the position is static or
+    not.
+    """
+
     def __init__(
         self,
         pos,
         scaling,
         translation,
         static,
+        label,
         color=colorpicker.get_color_by_name("black"),
     ):
+        """Initialize position object.
+
+        Args:
+            pos: Position in environment.
+            scaling (float): Scaling factor from position to display position.
+            translation (float): Translation factor from position to display
+                position.
+            static (bool): Whether the position is static or not.
+            label: Label representing object.
+            color (tuple, optional): RGB tuple of color. Defaults to `black`.
+        """
         self._pos = pos
         self._scaled_pos = None
         self.scaling = scaling
         self.translation = translation
         self.static = static
+        self._label = label
         self._color = color
 
     def _compute_scaled_position(self, pos):
+        """Returns scaled and translated position of object.
+
+        Args:
+            pos (tuple): Position to scale and translate.
+
+        Returns:
+            np.ndarray: Scaled and translated position.
+        """
         return np.array(
             [
                 pos[0] * self.scaling + self.translation,
@@ -31,6 +59,11 @@ class Position:
 
     @property
     def position(self):
+        """Position of object.
+
+        Returns:
+            Object position.
+        """
         return self._pos
 
     @position.setter
@@ -43,6 +76,13 @@ class Position:
 
     @property
     def scaled_position(self):
+        """Scaled and translated position of object.
+
+        Position is recomputed for every call if the object is not static.
+
+        Returns:
+            np.ndarray: Scaled and translated position.
+        """
         if self._scaled_pos is None or not self.static:
             self.scaled_position = self._compute_scaled_position(self.position)
         return self._scaled_pos
@@ -56,7 +96,29 @@ class Position:
         del self._scaled_pos
 
     @property
+    def label(self):
+        """Label of object.
+
+        Returns:
+            Object label.
+        """
+        return self._label
+
+    @label.setter
+    def label(self, label):
+        self._label = label
+
+    @label.deleter
+    def label(self):
+        del self._label
+
+    @property
     def color(self):
+        """Color of object.
+
+        Returns:
+            tuple: RGB tuple of object's color.
+        """
         return self._color
 
     @color.setter
@@ -69,51 +131,123 @@ class Position:
 
 
 class Point(Position):
-    def __init__(self, pos, scaling, translation):
+    """Object representing points in the environment."""
+
+    def __init__(self, pos, scaling, translation, label=None):
+        """Initialize point.
+
+        Args:
+            pos: Position in the environment
+            scaling (float): Scaling factor from position to display position.
+            translation (float): Translation factor from position to display
+                position.
+            label (optional): Label of point. Defaults to None.
+        """
         super().__init__(
-            pos,
-            scaling,
-            translation,
+            pos=pos,
+            scaling=scaling,
+            translation=translation,
             static=True,
+            label=label,
             color=colorpicker.get_color_by_name("lightgrey"),
         )
-        self.collect_counter = 0
+        self._collect_counter = 0
 
     def get_collect_counter(self):
-        return self.collect_counter
+        """Returns number of times point has been collected.
+
+        Returns:
+            int: Collect counter.
+        """
+        return self._collect_counter
 
     def is_collected(self):
-        return self.collect_counter > 0
+        """Returns whether or not the object has previously been collected.
+
+        Returns:
+            bool: True if object has been collected, False otherwise.
+        """
+        return self._collect_counter > 0
 
     def collect(self, collector):
-        # FIXME: What happens if a point is collected by several collectors at the same time?
-        factor = 1.2**self.collect_counter
-        self.collect_counter += 1
+        """Collects point, increments collect counter, and colors the point.
+
+        Args:
+            collector (Collector): Collector of the point.
+        """
+        # FIXME: What happens if a point is collected by several collectors at
+        # the same time?
+        factor = 1.2**self._collect_counter
+        self._collect_counter += 1
         self.color = colorpicker.increase_intensity(
             collector.color, factor=factor
         )
 
-    def __str__(self):
-        return (
-            f"Point: {{ pos: {self._pos}, collected: {self.collect_counter} }}"
-        )
-
 
 class Collector(Position):
-    def __init__(self, pos, scaling, translation):
+    """Object representing collectors in the environment.
+
+    Attributes:
+        label: Label of the current collector position.
+        points (list): List of points collected by the collector.
+        path_positions (list): List of positions that the collector has moved to.
+        path_labels (list): List of labels that the collector has moved to.
+        moves (int): Number of moves the collector has made.
+        cheated (int): Number of points that the collector has collected that
+            have already been collected by another collector.
+        unique_points_collected (int): Number of unique points collected by
+            the collector.
+        total_points_collected (int): Total number of points collected by the
+            collector.
+    """
+
+    def __init__(self, pos, scaling, translation, label=None):
+        """Initialize collector.
+
+        Args:
+            pos: Position in the environment.
+            scaling (float): Scaling factor from position to display position.
+            translation (float): Translation factor from position to display
+                position.
+            label (optional): Optional label of the current collector
+                position. Defaults to None.
+        """
         super().__init__(
-            pos,
-            scaling,
-            translation,
-            False,
+            pos=pos,
+            scaling=scaling,
+            translation=translation,
+            static=False,
+            label=label,
             color=colorpicker.get_color(),
         )
         self.points = []
+        self.path_positions = [pos]
+        self.path_labels = [label]
+        self.moves = 0
         self.cheated = 0
         self.unique_points_collected = 0
         self.total_points_collected = 0
 
+    def move(self, position, label=None):
+        """Moves collector to a new position with an optional label.
+
+        Args:
+            position: New position of the collector.
+            label (optional): New label. Defaults to None.
+        """
+        if label is not None:
+            self.label = label
+            self.path_labels.append(label)
+        self.position = position
+        self.path_positions.append(position)
+        self.moves += 1
+
     def collect(self, point):
+        """Collects a point.
+
+        Args:
+            point (Point): Point to collect.
+        """
         self.points.append(point)
         self.total_points_collected += 1
         if point.is_collected():
