@@ -60,7 +60,7 @@ class raw_env(AECEnv):
         """Initialize environment.
 
         Args:
-            point_positions (np.ndarray): Positions of collectible points as a
+            point_positions (np.ndarray): Positions of collectable points as a
                 numpy array with shape (n, 2) representing n (x, y)
                 coordinates.
             init_agent_positions (np.ndarray): Initial positions of n agents

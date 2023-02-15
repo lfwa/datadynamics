@@ -36,7 +36,7 @@ class raw_env(AECEnv):
     This environment is based on a weighted (possible directed) graph using
     networkx. The graph represents the environment structure and may define
     obstacles by creating nodes with e.g. no connecting edges as well as
-    define collectible points. Each agent in the environment defines a
+    define collectable points. Each agent in the environment defines a
     collector that can move around the graph and collect the defined points.
 
     Attributes:
@@ -73,7 +73,7 @@ class raw_env(AECEnv):
                 defining the environment. Node labels must be a continuous set
                 of integers starting at 0.
             point_labels (list[int]): List of node labels to identify
-                collectible points.
+                collectable points.
             init_agent_labels (list[int]): List of node labels to identify
                 initial agent positions.
             max_collect (list[int]): List of maximum number of points each
