@@ -88,7 +88,6 @@ class GraphGreedyPolicy(BasePolicy):
             self.shortest_paths = dict(
                 nx.all_pairs_dijkstra_path(self.env.graph)
             )
-            print(self.shortest_paths)
         # cur_goals consist of (path, point_was_collected) keyed by agent.
         self.cur_goals = {}
         logging.info("Completed initialization.")
@@ -135,6 +134,8 @@ class GraphGreedyPolicy(BasePolicy):
                     reward = 0
                     for i in range(len(path) - 1):
                         reward += self.env.reward(path[i], path[i + 1])
+                    # Trim first node as it is the current node.
+                    path = path[1:]
                 if reward > best_reward:
                     best_reward = reward
                     goal_path = path[:]
