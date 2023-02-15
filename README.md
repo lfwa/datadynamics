@@ -9,7 +9,7 @@
 
 Datacollect is a Python library and environment for simulating (multi-agent) data collection. The library is built on top of [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) and is distributed under the [BSD 3-Clause License](LICENSE).
 
-The documentation is available at [lfwa.github.io/datacollect](https://lfwa.github.io/datacollect/).
+The documentation is available at [lfwa.github.io/datacollect/](https://lfwa.github.io/datacollect/).
 
 ## Installation
 Datacollect can be installed via PyPI from Python 3.10 and higher:
@@ -21,7 +21,7 @@ $ pip install datacollect
 Alternatively, you can install from source by downloading the [latest release](https://github.com/lfwa/datacollect/releases) or by cloning the [GitHub repository](https://github.com/lfwa/datacollect), navigating into the directory, and installing via [Poetry](https://python-poetry.org/): `poetry install`.
 
 ## Usage
-Visit the documentation site at [lfwa.github.io/datacollect](https://lfwa.github.io/datacollect/) for full usage guides.
+Visit the documentation site at [lfwa.github.io/datacollect/](https://lfwa.github.io/datacollect/) for full usage guides.
 
 ### Quick Start
 
@@ -30,7 +30,7 @@ Visit the documentation site at [lfwa.github.io/datacollect](https://lfwa.github
 </p>
 
 ```python
-# See tutorials/example.py
+# See tutorials/collector/example.py
 from datacollect.environments import collector_v0
 from datacollect.policies import greedy_policy_v0
 
