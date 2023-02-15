@@ -51,6 +51,9 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Tutorials:
+      - tutorials/graph_collector_tutorial.md
+      - tutorials/collector_tutorial.md
   - API:
       - api/environments.md
       - api/policies.md

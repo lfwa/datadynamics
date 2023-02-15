@@ -30,7 +30,7 @@ Visit the documentation site at [lfwa.github.io/datacollect/](https://lfwa.githu
 </p>
 
 ```python
-# See tutorials/collector/example.py
+# See tutorials/collector/wrapper_example.py
 from datacollect.environments import collector_v0
 from datacollect.policies import greedy_policy_v0
 

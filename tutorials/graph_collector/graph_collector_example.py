@@ -7,7 +7,7 @@ from datacollect.policies import greedy_policy_v0
 """
 Define following graph:
 
-A A N
+A A P
 P N N
 N - P
 
