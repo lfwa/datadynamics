@@ -20,6 +20,7 @@ class Position:
         translation,
         static,
         label,
+        id,
         color=colorpicker.get_color_by_name("black"),
     ):
         """Initialize position object.
@@ -31,6 +32,7 @@ class Position:
                 position.
             static (bool): Whether the position is static or not.
             label: Label representing object.
+            id (str): Unique identifier of object.
             color (tuple, optional): RGB tuple of color. Defaults to `black`.
         """
         self._pos = pos
@@ -39,6 +41,7 @@ class Position:
         self.translation = translation
         self.static = static
         self._label = label
+        self._id = id
         self._color = color
 
     def _compute_scaled_position(self, pos):
@@ -113,6 +116,23 @@ class Position:
         del self._label
 
     @property
+    def id(self):
+        """Unique identifier of object.
+
+        Returns:
+            Object identifier.
+        """
+        return self._id
+
+    @id.setter
+    def id(self, id):
+        self._id = id
+
+    @id.deleter
+    def id(self):
+        del self._id
+
+    @property
     def color(self):
         """Color of object.
 
@@ -131,9 +151,14 @@ class Position:
 
 
 class Point(Position):
-    """Object representing points in the environment."""
+    """Object representing points in the environment.
 
-    def __init__(self, pos, scaling, translation, label=None):
+    Attributes:
+        collector_tracker (dict): Dictionary of collectors and how many times
+            they have collected this point.
+    """
+
+    def __init__(self, pos, scaling, translation, label=None, id=None):
         """Initialize point.
 
         Args:
@@ -142,6 +167,7 @@ class Point(Position):
             translation (float): Translation factor from position to display
                 position.
             label (optional): Label of point. Defaults to None.
+            id (str, optional): Unique identifier of point. Defaults to None.
         """
         super().__init__(
             pos=pos,
@@ -149,9 +175,11 @@ class Point(Position):
             translation=translation,
             static=True,
             label=label,
+            id=id,
             color=colorpicker.get_color_by_name("lightgrey"),
         )
         self._collect_counter = 0
+        self.collector_tracker = {}
 
     def get_collect_counter(self):
         """Returns number of times point has been collected.
@@ -175,13 +203,11 @@ class Point(Position):
         Args:
             collector (Collector): Collector of the point.
         """
-        # FIXME: What happens if a point is collected by several collectors at
-        # the same time?
-        factor = 1.2**self._collect_counter
-        self._collect_counter += 1
-        self.color = colorpicker.increase_intensity(
-            collector.color, factor=factor
+        self.collector_tracker[collector.id] = (
+            self.collector_tracker.get(collector.id, 0) + 1
         )
+        self._collect_counter += 1
+        self.color = collector.color
 
 
 class Collector(Position):
@@ -190,7 +216,8 @@ class Collector(Position):
     Attributes:
         label: Label of the current collector position.
         points (list): List of points collected by the collector.
-        path_positions (list): List of positions that the collector has moved to.
+        path_positions (list): List of positions that the collector has moved
+            to.
         path_labels (list): List of labels that the collector has moved to.
         moves (int): Number of moves the collector has made.
         cheated (int): Number of points that the collector has collected that
@@ -201,7 +228,7 @@ class Collector(Position):
             collector.
     """
 
-    def __init__(self, pos, scaling, translation, label=None):
+    def __init__(self, pos, scaling, translation, label=None, id=None):
         """Initialize collector.
 
         Args:
@@ -211,6 +238,8 @@ class Collector(Position):
                 position.
             label (optional): Optional label of the current collector
                 position. Defaults to None.
+            id (str, optional): Unique identifier of collector. Defaults to
+                None.
         """
         super().__init__(
             pos=pos,
@@ -218,6 +247,7 @@ class Collector(Position):
             translation=translation,
             static=False,
             label=label,
+            id=id,
             color=colorpicker.get_color(),
         )
         self.points = []

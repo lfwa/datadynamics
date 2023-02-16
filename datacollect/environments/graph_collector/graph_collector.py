@@ -403,6 +403,7 @@ class raw_env(AECEnv):
                 scaling=0,
                 translation=0,
                 label=label,
+                id=f"collector_{agent}",
             )
             for agent, label in zip(agents, init_agent_labels)
         }
@@ -428,6 +429,7 @@ class raw_env(AECEnv):
                 scaling=0,
                 translation=0,
                 label=label,
+                id=f"point_{label}",
             )
             for label in point_labels
         }
@@ -749,7 +751,13 @@ class raw_env(AECEnv):
         total_reward = sum(self.cumulative_rewards.values())
         font = pygame.font.Font(pygame.font.get_default_font(), FONT_SIZE)
         text1 = font.render(
-            f"Iteration: {self.iteration} | Total points collected: {overall_total_points_collected} | Unique points collected: {overall_unique_points_collected} / {len(self.points)} | Cheated: {overall_cheated}",
+            (
+                f"Iteration: {self.iteration} | "
+                f"Total points collected: {overall_total_points_collected} | "
+                "Unique points collected: "
+                f"{overall_unique_points_collected} / {len(self.points)} | "
+                f"Cheated: {overall_cheated}"
+            ),
             True,
             (0, 0, 0),
         )
@@ -821,21 +829,46 @@ class raw_env(AECEnv):
     def _render_points(self, surf, points, node_width, node_height):
         """Renders all points as circles.
 
+        Points are colored according to their collector as a pie chart.
+
         Args:
             surf (pygame.Surface): Surface to render points on.
             points (list[Points]): List of points to render.
             node_width (int): Display width of a node.
             node_height (int): Display height of a node.
         """
-        # FIXME: Multiple collectors have taken the same path, only latest
-        # will be rendered!
         for point in points.values():
             x, y = point.position
-            x += node_width / 2
-            y += node_height / 2
-            pygame.draw.circle(
-                surf, point.color, (x, y), min(node_width / 2, node_height / 2)
-            )
+            bounding_box = pygame.Rect(x, y, node_width, node_height)
+            total_collections = point.get_collect_counter()
+            start_angle = 0
+
+            if total_collections == 0:
+                x += node_width / 2
+                y += node_height / 2
+                pygame.draw.circle(
+                    surf,
+                    point.color,
+                    (x, y),
+                    min(node_width / 2, node_height / 2),
+                )
+            else:
+                for (
+                    collector_id,
+                    collections,
+                ) in point.collector_tracker.items():
+                    if collections == 0:
+                        continue
+                    arc_length = collections / total_collections * 2 * math.pi
+                    pygame.draw.arc(
+                        surf,
+                        self.collectors[collector_id[10:]].color,
+                        bounding_box,
+                        start_angle,
+                        start_angle + arc_length,
+                        int(max(node_width, node_height)),
+                    )
+                    start_angle += arc_length
 
     def _render_paths(
         self, surf, collectors, node_width, node_height, path_size

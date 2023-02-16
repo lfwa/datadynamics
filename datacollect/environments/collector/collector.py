@@ -1,3 +1,5 @@
+import math
+
 import gymnasium
 import numpy as np
 import pygame
@@ -353,7 +355,12 @@ class raw_env(AECEnv):
             dict: Dictionary of collectors keyed by agent name.
         """
         collectors = {
-            agent: Collector(position, scaling, translation)
+            agent: Collector(
+                pos=position,
+                scaling=scaling,
+                translation=translation,
+                id=f"collector_{agent}",
+            )
             for agent, position in zip(agents, agent_positions)
         }
         return collectors
@@ -370,8 +377,13 @@ class raw_env(AECEnv):
             list[Point]: List of points.
         """
         points = [
-            Point(position, scaling, translation)
-            for position in point_positions
+            Point(
+                pos=position,
+                scaling=scaling,
+                translation=translation,
+                id=f"point_{i}",
+            )
+            for i, position in enumerate(point_positions)
         ]
         return points
 
@@ -668,20 +680,43 @@ class raw_env(AECEnv):
     def _render_points(self, surf, points, point_size):
         """Renders all points as circles.
 
+        Points are colored according to their collector as a pie chart.
+
         Args:
             surf (pygame.Surface): Surface to render points on.
             points (list[Points]): List of points to render.
             point_size (int): Render size of points.
         """
-        # FIXME: Multiple collectors have taken the same path, only latest
-        # will be rendered!
         for point in points:
-            pygame.draw.circle(
-                surf,
-                point.color,
-                tuple(point.scaled_position),
-                point_size,
-            )
+            x, y = tuple(point.scaled_position - (point_size / 2))
+            bounding_box = pygame.Rect(x, y, point_size * 2, point_size * 2)
+            total_collections = point.get_collect_counter()
+            start_angle = 0
+
+            if total_collections == 0:
+                pygame.draw.circle(
+                    surf,
+                    point.color,
+                    tuple(point.scaled_position),
+                    point_size,
+                )
+            else:
+                for (
+                    collector_id,
+                    collections,
+                ) in point.collector_tracker.items():
+                    if collections == 0:
+                        continue
+                    arc_length = collections / total_collections * 2 * math.pi
+                    pygame.draw.arc(
+                        surf,
+                        self.collectors[collector_id[10:]].color,
+                        bounding_box,
+                        start_angle,
+                        start_angle + arc_length,
+                        point_size * 2,
+                    )
+                    start_angle += arc_length
 
     def _render_paths(self, surf, collectors, path_size):
         """Renders paths taken between collections of points.
