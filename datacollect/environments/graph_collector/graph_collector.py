@@ -867,7 +867,7 @@ class raw_env(AECEnv):
             collectors (dict): Dict of collectors.
             path_size (int): Render size of paths.
         """
-        path_pair = {}
+        path_pairs = {}
         for collector in collectors.values():
             path_pos_len = len(collector.path_positions)
             if path_pos_len < 2:
@@ -877,9 +877,16 @@ class raw_env(AECEnv):
                     collector.path_positions[i - 1],
                     collector.path_positions[i],
                 )
-                path_pair[key] = path_pair.get(key, []) + [collector]
+                reverse_key = (key[1], key[0])
+                # We should not care whether it is (a, b) or (b, a).
+                if key in path_pairs:
+                    path_pairs[key] += [collector]
+                elif reverse_key in path_pairs:
+                    path_pairs[reverse_key] += [collector]
+                else:
+                    path_pairs[key] = [collector]
 
-        for path, collectors in path_pair.items():
+        for path, collectors in path_pairs.items():
             total_collectors = len(collectors)
             prev_x, prev_y = self._center(path[0])
             x, y = self._center(path[1])
