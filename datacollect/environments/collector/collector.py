@@ -912,12 +912,10 @@ class SamplingWrapperEnv(raw_env):
             **kwargs,
         )
 
-    def reset(self, resample=True, seed=None, return_info=False, options=None):
+    def reset(self, seed=None, return_info=False, options=None):
         """Resets the environment to a starting state.
 
         Args:
-            resample (bool, optional): Whether to resample point and agent
-                positions between resets. Defaults to True.
             seed (int, optional): Random seed to use for resetting. Defaults
                 to None.
             return_info (bool, optional): Whether to return infos. Defaults to
@@ -928,12 +926,6 @@ class SamplingWrapperEnv(raw_env):
             dict: Dictionary of observations for each agent. Infos are
                 returned if `return_info` is True.
         """
-        if resample:
-            self.point_positions = self.sampler(self.rng, self.n_points)
-            point_mean = np.mean(self.point_positions, axis=0)
-            self.agent_positions = np.array(
-                [point_mean for _ in range(self.n_agents)]
-            )
         return super().reset(
             seed=seed, return_info=return_info, options=options
         )
