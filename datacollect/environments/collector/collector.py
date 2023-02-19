@@ -109,7 +109,7 @@ class raw_env(AECEnv):
             agent: max_collect[i] for i, agent in enumerate(self.agents)
         }
 
-        self.scaling, self.translation = self._compute_scaling_and_translation(
+        self.scaling, self.translation = self._get_scaling_translation(
             self.point_positions,
             self.agent_positions,
             SCREEN_WIDTH,
@@ -290,7 +290,7 @@ class raw_env(AECEnv):
         )
         return state_space
 
-    def _compute_scaling_and_translation(
+    def _get_scaling_translation(
         self,
         point_positions,
         agent_positions,
@@ -298,9 +298,9 @@ class raw_env(AECEnv):
         screen_height,
         relative_padding=0.1,
     ):
-        """Computes scaling and translation to fit points and agents on screen.
+        """Returns scaling and translation factors for x- and y-axis.
 
-        Preserves aspect ratio of data.
+        Fits data on display while preserving aspect ratio.
 
         Args:
             point_positions (np.ndarray): Point positions.
@@ -311,10 +311,10 @@ class raw_env(AECEnv):
                 Defaults to 0.1.
 
         Returns:
-            tuple(float, float): Scaling and translation as a tuple.
+            tuple: Tuple of scaling and translation factors for x and y-axis.
+                ((scale_x, scale_y), (translate_x, translate_y)).
         """
-        # FIXME: There is something wrong with this as some points will display off screen!
-        assert 0 <= relative_padding < 1, "Relative padding must be in [0,1[."
+        assert 0 <= relative_padding < 1, "Relative padding must be in [0,1)."
         pos = np.concatenate((point_positions, agent_positions), axis=0)
         minimum = np.min(pos, axis=0)
         maximum = np.max(pos, axis=0)
@@ -326,26 +326,32 @@ class raw_env(AECEnv):
         )
         x_range = x_max - x_min
         y_range = y_max - y_min
-        # Scale to fit within [a,b] while preserving aspect ratio.
-        if x_range > y_range and x_range > 0:
-            b = screen_width * (1 - relative_padding)
-            a = screen_width * relative_padding
-            scaling = (b - a) / x_range
-            translation = -x_min * scaling + a
-        elif y_range > 0:
-            b = screen_height * (1 - relative_padding)
-            a = screen_height * relative_padding
-            scaling = (b - a) / y_range
-            translation = -y_min * scaling + a
-        else:
-            scaling = 1
-            translation = 0
-        return scaling, translation
+        max_range = np.max([x_range, y_range, 1])
+
+        upper_x = screen_width * (1 - relative_padding)
+        lower_x = screen_width * relative_padding
+        scaling_x = (upper_x - lower_x) / max_range
+        translation_x = -x_min * scaling_x + lower_x
+
+        upper_y = screen_height * (1 - relative_padding)
+        lower_y = screen_height * relative_padding
+        scaling_y = (upper_y - lower_y) / max_range
+        translation_y = -y_min * scaling_y + lower_y
+
+        return (scaling_x, scaling_y), (translation_x, translation_y)
 
     def _scale_position(self, position):
+        """Scale a position using stored scaling and translation factors.
+
+        Args:
+            position (tuple): (x, y) tuple of position.
+
+        Returns:
+            tuple: Scaled (x, y) tuple of position.
+        """
         x, y = position
-        x = x * self.scaling + self.translation
-        y = y * self.scaling + self.translation
+        x = x * self.scaling[0] + self.translation[0]
+        y = y * self.scaling[1] + self.translation[1]
         return x, y
 
     def _create_collectors(
@@ -356,8 +362,8 @@ class raw_env(AECEnv):
         Args:
             agent_positions (np.ndarray): Agent positions.
             agents (list[str]): List of agent names.
-            scaling (float): Scaling factor for displaying.
-            translation (float): Translation factor for displaying.
+            scaling (tuple): Scaling factors for displaying.
+            translation (tuple): Translation factors for displaying.
 
         Returns:
             dict: Dictionary of collectors keyed by agent name.
@@ -378,8 +384,8 @@ class raw_env(AECEnv):
 
         Args:
             point_positions (np.ndarray): Point positions.
-            scaling (float): Scaling factor for displaying.
-            translation (float): Translation factor for displaying.
+            scaling (tuple): Scaling factors for displaying.
+            translation (tuple): Translation factors for displaying.
 
         Returns:
             list[Point]: List of points.

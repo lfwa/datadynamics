@@ -14,10 +14,10 @@ FPS = 120
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
 # Rendering sizes.
-POINT_SIZE = 40
+POINT_SIZE = 20
 PATH_SIZE = 2
 COLLECTOR_SIZE = 4
-COLLECTOR_LEN = 50
+COLLECTOR_LEN = 25
 FONT_SIZE = 20
 
 
@@ -56,11 +56,7 @@ class raw_env(AECEnv):
         graph,
         point_labels,
         init_agent_labels,
-        # TODO: Alternative to max_collect should be max_moves.
         max_collect,
-        # TODO: Might want to allow for custom cost of cheating, e.g., as a
-        # function of node name? Then it can be arbitrary since creator should
-        # have all information about the graph.
         nodes_per_row=None,
         cheat_cost=500,
         caught_probability=0.5,
@@ -715,10 +711,6 @@ class raw_env(AECEnv):
             collector_size=COLLECTOR_SIZE,
         )
         self._render_text(self.surf)
-        # TODO: Need to visualize graph edges!
-        # Might be difficult if the graph is not just locally connected like
-        # intended since connections can go across the screen! Visualization
-        # of the graph will also be messed up for arbitrary graphs!
 
         if render_mode == "human":
             pygame.event.pump()

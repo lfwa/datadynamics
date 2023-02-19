@@ -27,9 +27,8 @@ class Position:
 
         Args:
             pos: Position in environment.
-            scaling (float): Scaling factor from position to display position.
-            translation (float): Translation factor from position to display
-                position.
+            scaling (tuple): Scaling factors for displaying.
+            translation (tuple): Translation factors for displaying.
             static (bool): Whether the position is static or not.
             label: Label representing object.
             id (str): Unique identifier of object.
@@ -55,8 +54,8 @@ class Position:
         """
         return np.array(
             [
-                pos[0] * self.scaling + self.translation,
-                pos[1] * self.scaling + self.translation,
+                pos[0] * self.scaling[0] + self.translation[0],
+                pos[1] * self.scaling[1] + self.translation[1],
             ]
         )
 
@@ -163,9 +162,8 @@ class Point(Position):
 
         Args:
             pos: Position in the environment
-            scaling (float): Scaling factor from position to display position.
-            translation (float): Translation factor from position to display
-                position.
+            scaling (tuple): Scaling factors for displaying.
+            translation (tuple): Translation factors for displaying.
             label (optional): Label of point. Defaults to None.
             id (str, optional): Unique identifier of point. Defaults to None.
         """
@@ -233,9 +231,8 @@ class Collector(Position):
 
         Args:
             pos: Position in the environment.
-            scaling (float): Scaling factor from position to display position.
-            translation (float): Translation factor from position to display
-                position.
+            scaling (tuple): Scaling factors for displaying.
+            translation (tuple): Translation factors for displaying.
             label (optional): Optional label of the current collector
                 position. Defaults to None.
             id (str, optional): Unique identifier of collector. Defaults to
