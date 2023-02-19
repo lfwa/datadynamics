@@ -737,8 +737,6 @@ class raw_env(AECEnv):
         Args:
             surf (pygame.Surface): Surface to render text on.
         """
-        # TODO: Render each text by itself since whole string will move around
-        # due to size differences in character length.
         (
             stats,
             overall_total_points_collected,
@@ -917,6 +915,7 @@ class raw_env(AECEnv):
         """Renders all collectors as crosses.
 
         Collectors are rotated when stacked to avoid overlapping.
+        Black borders are added to crosses.
 
         Args:
             surf (pygame.Surface): Surface to render collectors on.
@@ -924,18 +923,46 @@ class raw_env(AECEnv):
             collector_len (int): Length of collector cross.
             collector_size (int): Size of collector cross.
         """
-        for position, collectors in groupby(
+        for position, colls in groupby(
             collectors.values(), lambda col: col.position
         ):
             position = self._center(position)
-            collectors = list(collectors)
-            total_collectors = len(collectors)
+            colls = list(colls)
+            total_collectors = len(colls)
             shift_increment = collector_len / total_collectors
             shift = collector_len / 2
 
-            for i, collector in enumerate(collectors):
+            for i, collector in enumerate(colls):
                 cross_rotate_shift = i * shift_increment
-
+                # Add black border to cross.
+                border_size = math.ceil(collector_size * 1.7)
+                pygame.draw.line(
+                    surf,
+                    (0, 0, 0),
+                    start_pos=(
+                        position[0] + cross_rotate_shift - shift,
+                        position[1] - shift,
+                    ),
+                    end_pos=(
+                        position[0] + shift - cross_rotate_shift,
+                        position[1] + shift,
+                    ),
+                    width=border_size,
+                )
+                pygame.draw.line(
+                    surf,
+                    (0, 0, 0),
+                    start_pos=(
+                        position[0] + shift,
+                        position[1] + cross_rotate_shift - shift,
+                    ),
+                    end_pos=(
+                        position[0] - shift,
+                        position[1] + shift - cross_rotate_shift,
+                    ),
+                    width=border_size,
+                )
+                # Draw cross.
                 pygame.draw.line(
                     surf,
                     collector.color,

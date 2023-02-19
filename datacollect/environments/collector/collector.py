@@ -743,6 +743,9 @@ class raw_env(AECEnv):
     ):
         """Renders all collectors as crosses.
 
+        Collectors are rotated when stacked to avoid overlapping.
+        Black borders are added to crosses.
+
         Args:
             surf (pygame.Surface): Surface to render collectors on.
             collectors (dict): Dict of collectors.
@@ -760,7 +763,35 @@ class raw_env(AECEnv):
 
             for i, collector in enumerate(colls):
                 cross_rotate_shift = i * shift_increment
-
+                # Add black border to cross.
+                border_size = math.ceil(collector_size * 1.7)
+                pygame.draw.line(
+                    surf,
+                    (0, 0, 0),
+                    start_pos=(
+                        position[0] + cross_rotate_shift - shift,
+                        position[1] - shift,
+                    ),
+                    end_pos=(
+                        position[0] + shift - cross_rotate_shift,
+                        position[1] + shift,
+                    ),
+                    width=border_size,
+                )
+                pygame.draw.line(
+                    surf,
+                    (0, 0, 0),
+                    start_pos=(
+                        position[0] + shift,
+                        position[1] + cross_rotate_shift - shift,
+                    ),
+                    end_pos=(
+                        position[0] - shift,
+                        position[1] + shift - cross_rotate_shift,
+                    ),
+                    width=border_size,
+                )
+                # Draw cross.
                 pygame.draw.line(
                     surf,
                     collector.color,
