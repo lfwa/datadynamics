@@ -1,4 +1,5 @@
 import math
+from itertools import groupby
 
 import gymnasium
 import networkx as nx
@@ -13,10 +14,10 @@ FPS = 120
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
 # Rendering sizes.
-POINT_SIZE = 4
+POINT_SIZE = 40
 PATH_SIZE = 2
 COLLECTOR_SIZE = 4
-COLLECTOR_LEN = 5
+COLLECTOR_LEN = 50
 FONT_SIZE = 20
 
 
@@ -693,8 +694,7 @@ class raw_env(AECEnv):
         self._render_points(
             surf=self.surf,
             points=self.points,
-            node_width=self.node_width,
-            node_height=self.node_height,
+            point_size=POINT_SIZE,
         )
         self._render_obstacles(
             surf=self.surf,
@@ -706,15 +706,12 @@ class raw_env(AECEnv):
         self._render_paths(
             surf=self.surf,
             collectors=self.collectors,
-            node_width=self.node_width,
-            node_height=self.node_height,
             path_size=PATH_SIZE,
         )
         self._render_collectors(
             surf=self.surf,
             collectors=self.collectors,
-            node_width=self.node_width,
-            node_height=self.node_height,
+            collector_len=COLLECTOR_LEN,
             collector_size=COLLECTOR_SIZE,
         )
         self._render_text(self.surf)
@@ -826,7 +823,7 @@ class raw_env(AECEnv):
                 rect=rect,
             )
 
-    def _render_points(self, surf, points, node_width, node_height):
+    def _render_points(self, surf, points, point_size):
         """Renders all points as circles.
 
         Points are colored according to their collector as a pie chart.
@@ -834,23 +831,22 @@ class raw_env(AECEnv):
         Args:
             surf (pygame.Surface): Surface to render points on.
             points (list[Points]): List of points to render.
-            node_width (int): Display width of a node.
-            node_height (int): Display height of a node.
+            point_size (int): Render size of a point.
         """
         for point in points.values():
-            x, y = point.position
-            bounding_box = pygame.Rect(x, y, node_width, node_height)
+            x, y = self._center(point.position)
+            bounding_box = pygame.Rect(
+                x - point_size / 2, y - point_size / 2, point_size, point_size
+            )
             total_collections = point.get_collect_counter()
             start_angle = 0
 
             if total_collections == 0:
-                x += node_width / 2
-                y += node_height / 2
                 pygame.draw.circle(
                     surf,
                     point.color,
                     (x, y),
-                    min(node_width / 2, node_height / 2),
+                    point_size / 2,
                 )
             else:
                 for (
@@ -866,77 +862,120 @@ class raw_env(AECEnv):
                         bounding_box,
                         start_angle,
                         start_angle + arc_length,
-                        int(max(node_width, node_height)),
+                        point_size,
                     )
                     start_angle += arc_length
 
-    def _render_paths(
-        self, surf, collectors, node_width, node_height, path_size
-    ):
+    def _render_paths(self, surf, collectors, path_size):
         """Renders paths taken by collectors.
+
+        Colors are assigned to paths based on the collector that took it.
+        If paths overlap then they are colored in segments.
 
         Args:
             surf (pygame.Surface): Surface to render paths on.
             collectors (dict): Dict of collectors.
-            node_width (int): Display width of a node.
-            node_height (int): Display height of a node.
             path_size (int): Render size of paths.
         """
-        # FIXME: Multiple collectors have taken the same path, only latest
-        # will be rendered!
+        path_pair = {}
         for collector in collectors.values():
-            for i in range(1, len(collector.path_positions)):
-                prev_x, prev_y = collector.path_positions[i - 1]
-                prev_x += node_width / 2
-                prev_y += node_height / 2
-                x, y = collector.path_positions[i]
-                x += node_width / 2
-                y += node_height / 2
+            path_pos_len = len(collector.path_positions)
+            if path_pos_len < 2:
+                continue
+            for i in range(1, path_pos_len):
+                key = (
+                    collector.path_positions[i - 1],
+                    collector.path_positions[i],
+                )
+                path_pair[key] = path_pair.get(key, []) + [collector]
+
+        for path, collectors in path_pair.items():
+            total_collectors = len(collectors)
+            prev_x, prev_y = self._center(path[0])
+            x, y = self._center(path[1])
+            segment_x = (x - prev_x) / total_collectors
+            segment_y = (y - prev_y) / total_collectors
+
+            for collector in collectors:
                 pygame.draw.line(
                     surf,
                     collector.color,
                     (prev_x, prev_y),
-                    (x, y),
+                    (prev_x + segment_x, prev_y + segment_y),
                     path_size,
                 )
+                prev_x += segment_x
+                prev_y += segment_y
 
     def _render_collectors(
-        self, surf, collectors, node_width, node_height, collector_size
+        self,
+        surf,
+        collectors,
+        collector_len,
+        collector_size,
     ):
         """Renders all collectors as crosses.
+
+        Collectors are rotated when stacked to avoid overlapping.
 
         Args:
             surf (pygame.Surface): Surface to render collectors on.
             collectors (dict): Dict of collectors.
-            node_width (int): Display width of a node.
-            node_height (int): Display height of a node.
+            collector_len (int): Length of collector cross.
             collector_size (int): Size of collector cross.
         """
-        # FIXME: What if collectors overlap? Then only latest will be rendered!
-        for collector in collectors.values():
-            pygame.draw.line(
-                surf,
-                collector.color,
-                start_pos=collector.position,
-                end_pos=(
-                    collector.position[0] + node_width,
-                    collector.position[1] + node_height,
-                ),
-                width=collector_size,
-            )
-            pygame.draw.line(
-                surf,
-                collector.color,
-                start_pos=(
-                    collector.position[0] + node_width,
-                    collector.position[1],
-                ),
-                end_pos=(
-                    collector.position[0],
-                    collector.position[1] + node_height,
-                ),
-                width=collector_size,
-            )
+        for position, collectors in groupby(
+            collectors.values(), lambda col: col.position
+        ):
+            position = self._center(position)
+            collectors = list(collectors)
+            total_collectors = len(collectors)
+            shift_increment = collector_len / total_collectors
+            shift = collector_len / 2
+
+            for i, collector in enumerate(collectors):
+                cross_rotate_shift = i * shift_increment
+
+                pygame.draw.line(
+                    surf,
+                    collector.color,
+                    start_pos=(
+                        position[0] + cross_rotate_shift - shift,
+                        position[1] - shift,
+                    ),
+                    end_pos=(
+                        position[0] + shift - cross_rotate_shift,
+                        position[1] + shift,
+                    ),
+                    width=collector_size,
+                )
+                pygame.draw.line(
+                    surf,
+                    collector.color,
+                    start_pos=(
+                        position[0] + shift,
+                        position[1] + cross_rotate_shift - shift,
+                    ),
+                    end_pos=(
+                        position[0] - shift,
+                        position[1] + shift - cross_rotate_shift,
+                    ),
+                    width=collector_size,
+                )
+
+    def _center(self, position):
+        """Returns the position centered on the node.
+
+        Args:
+            pos (tuple): Position to center.
+
+        Returns:
+            tuple: Centered position.
+        """
+        return (
+            position[0] + self.node_width / 2,
+            position[1] + self.node_height / 2,
+        )
 
     def observation_space(self, agent):
         return self.observation_spaces[agent]
