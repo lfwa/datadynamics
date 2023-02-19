@@ -1,4 +1,5 @@
 import math
+from itertools import groupby
 
 import gymnasium
 import numpy as np
@@ -12,10 +13,10 @@ FPS = 120
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
 # Rendering sizes.
-POINT_SIZE = 4
+POINT_SIZE = 8
 PATH_SIZE = 2
 COLLECTOR_SIZE = 4
-COLLECTOR_LEN = 5
+COLLECTOR_LEN = 10
 FONT_SIZE = 20
 
 
@@ -312,6 +313,7 @@ class raw_env(AECEnv):
         Returns:
             tuple(float, float): Scaling and translation as a tuple.
         """
+        # FIXME: There is something wrong with this as some points will display off screen!
         assert 0 <= relative_padding < 1, "Relative padding must be in [0,1[."
         pos = np.concatenate((point_positions, agent_positions), axis=0)
         minimum = np.min(pos, axis=0)
@@ -619,8 +621,6 @@ class raw_env(AECEnv):
         Args:
             surf (pygame.Surface): Surface to render text on.
         """
-        # TODO: Render each text by itself since whole string will move around
-        # due to size differences in character length.
         (
             stats,
             overall_total_points_collected,
@@ -689,7 +689,7 @@ class raw_env(AECEnv):
         """
         for point in points:
             x, y = tuple(point.scaled_position - (point_size / 2))
-            bounding_box = pygame.Rect(x, y, point_size * 2, point_size * 2)
+            bounding_box = pygame.Rect(x, y, point_size, point_size)
             total_collections = point.get_collect_counter()
             start_angle = 0
 
@@ -698,7 +698,7 @@ class raw_env(AECEnv):
                     surf,
                     point.color,
                     tuple(point.scaled_position),
-                    point_size,
+                    point_size / 2,
                 )
             else:
                 for (
@@ -714,7 +714,7 @@ class raw_env(AECEnv):
                         bounding_box,
                         start_angle,
                         start_angle + arc_length,
-                        point_size * 2,
+                        point_size,
                     )
                     start_angle += arc_length
 
@@ -749,28 +749,44 @@ class raw_env(AECEnv):
             collector_len (int): Length of collector cross.
             collector_size (int): Size of collector cross.
         """
-        # FIXME: What if collectors overlap? Then only latest will be rendered!
-        for collector in collectors.values():
-            pygame.draw.line(
-                surf,
-                collector.color,
-                start_pos=tuple(collector.scaled_position - collector_len),
-                end_pos=tuple(collector.scaled_position + collector_len),
-                width=collector_size,
-            )
-            pygame.draw.line(
-                surf,
-                collector.color,
-                start_pos=(
-                    collector.scaled_position[0] - collector_len,
-                    collector.scaled_position[1] + collector_len,
-                ),
-                end_pos=(
-                    collector.scaled_position[0] + collector_len,
-                    collector.scaled_position[1] - collector_len,
-                ),
-                width=collector_size,
-            )
+        for position, colls in groupby(
+            collectors.values(), lambda col: tuple(col.position)
+        ):
+            colls = list(colls)
+            position = colls[0].scaled_position
+            total_collectors = len(colls)
+            shift_increment = collector_len / total_collectors
+            shift = collector_len / 2
+
+            for i, collector in enumerate(colls):
+                cross_rotate_shift = i * shift_increment
+
+                pygame.draw.line(
+                    surf,
+                    collector.color,
+                    start_pos=(
+                        position[0] + cross_rotate_shift - shift,
+                        position[1] - shift,
+                    ),
+                    end_pos=(
+                        position[0] + shift - cross_rotate_shift,
+                        position[1] + shift,
+                    ),
+                    width=collector_size,
+                )
+                pygame.draw.line(
+                    surf,
+                    collector.color,
+                    start_pos=(
+                        position[0] + shift,
+                        position[1] + cross_rotate_shift - shift,
+                    ),
+                    end_pos=(
+                        position[0] - shift,
+                        position[1] + shift - cross_rotate_shift,
+                    ),
+                    width=collector_size,
+                )
 
     def observation_space(self, agent):
         return self.observation_spaces[agent]
