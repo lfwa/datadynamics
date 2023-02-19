@@ -342,6 +342,12 @@ class raw_env(AECEnv):
             translation = 0
         return scaling, translation
 
+    def _scale_position(self, position):
+        x, y = position
+        x = x * self.scaling + self.translation
+        y = y * self.scaling + self.translation
+        return x, y
+
     def _create_collectors(
         self, agent_positions, agents, scaling, translation
     ):
@@ -719,24 +725,45 @@ class raw_env(AECEnv):
                     start_angle += arc_length
 
     def _render_paths(self, surf, collectors, path_size):
-        """Renders paths taken between collections of points.
+        """Renders paths taken by collectors.
+
+        Colors are assigned to paths based on the collector that took it.
+        If paths overlap then they are colored in segments.
 
         Args:
             surf (pygame.Surface): Surface to render paths on.
             collectors (dict): Dict of collectors.
             path_size (int): Render size of paths.
         """
-        # FIXME: Multiple collectors have taken the same path, only latest
-        # will be rendered!
+        path_pair = {}
         for collector in collectors.values():
-            for i in range(1, len(collector.points)):
+            path_pos_len = len(collector.path_positions)
+            if path_pos_len < 2:
+                continue
+            for i in range(1, path_pos_len):
+                key = (
+                    tuple(collector.path_positions[i - 1]),
+                    tuple(collector.path_positions[i]),
+                )
+                path_pair[key] = path_pair.get(key, []) + [collector]
+
+        for path, collectors in path_pair.items():
+            total_collectors = len(collectors)
+            prev_x, prev_y = self._scale_position(path[0])
+            x, y = self._scale_position(path[1])
+            segment_x = (x - prev_x) / total_collectors
+            segment_y = (y - prev_y) / total_collectors
+
+            for collector in collectors:
                 pygame.draw.line(
                     surf,
                     collector.color,
-                    collector.points[i - 1].scaled_position,
-                    collector.points[i].scaled_position,
+                    (prev_x, prev_y),
+                    (prev_x + segment_x, prev_y + segment_y),
                     path_size,
                 )
+                prev_x += segment_x
+                prev_y += segment_y
 
     def _render_collectors(
         self, surf, collectors, collector_len, collector_size
