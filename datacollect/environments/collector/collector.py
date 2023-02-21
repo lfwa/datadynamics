@@ -856,7 +856,6 @@ class raw_env(AECEnv):
         return self.action_spaces[agent]
 
     def seed(self, seed=None):
-        """Set random seed."""
         self.rng, seed = gymnasium.utils.seeding.np_random(seed)
         return [seed]
 

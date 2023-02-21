@@ -1006,12 +1006,10 @@ class raw_env(AECEnv):
         return self.action_spaces[agent]
 
     def seed(self, seed=None):
-        """Set random seed."""
         self.rng, seed = gymnasium.utils.seeding.np_random(seed)
         return [seed]
 
     def close(self):
-        """Close pygame display if it exists."""
         if self.screen is not None:
             pygame.display.quit()
             self.isopen = False
