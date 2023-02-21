@@ -58,8 +58,7 @@ class raw_env(AECEnv):
         init_agent_labels,
         max_collect,
         nodes_per_row=None,
-        cheat_cost=500,
-        caught_probability=0.5,
+        cheating_cost=lambda node_label: 500 * 0.5,
         static_graph=True,
         render_mode=None,
     ):
@@ -77,12 +76,10 @@ class raw_env(AECEnv):
                 agent can collect.
             nodes_per_row (int, optional): Number of nodes to display per row.
                 Defaults to None.
-            cheat_cost (int, optional): Cost of cheating by collecting an
+            cheating_cost (function, optional): Function that takes a node
+                label and returns the cost of cheating by collecting an
                 already collected point. Influences reward for collecting
-                points. Defaults to 500.
-            caught_probability (float, optional): Probability of getting
-                caught cheating. Influences reward for collecting points.
-                Defaults to 0.5.
+                points. Defaults to lambda node_label: 500 * 0.5.
             static_graph (bool, optional): Whether the underlying graph is
                 static and never changes. May influence performance of
                 policies as e.g. shortest paths will need to be recomputed for
@@ -105,8 +102,7 @@ class raw_env(AECEnv):
         self.point_labels = point_labels
         self.init_agent_labels = init_agent_labels
         self.render_mode = render_mode
-        self.cheat_cost = cheat_cost
-        self.caught_probability = caught_probability
+        self.cheating_cost = cheating_cost
         self.static_graph = static_graph
 
         if nodes_per_row is None:
@@ -447,17 +443,6 @@ class raw_env(AECEnv):
             np.array(pygame.surfarray.pixels3d(scaled_surf)), axes=(1, 0, 2)
         )
 
-    def cheating_cost(self, point):
-        """Cost of cheating by collecting an already collected point.
-
-        Args:
-            point (Point): Point for which to compute cheating cost.
-
-        Returns:
-            float: Cost of cheating.
-        """
-        return self.cheat_cost * self.caught_probability
-
     def reward(self, cur_node, new_node):
         """Returns reward for moving from current node to new node.
 
@@ -485,7 +470,7 @@ class raw_env(AECEnv):
                 "Reward cannot be calculated."
             )
         if new_node in self.points and self.points[new_node].is_collected():
-            cost += self.cheating_cost(self.points[new_node])
+            cost += self.cheating_cost(new_node)
         # Return negated cost as reward since we are using a cost-based model.
         return -cost
 
