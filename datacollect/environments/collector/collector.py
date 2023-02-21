@@ -56,8 +56,7 @@ class raw_env(AECEnv):
         point_positions,
         init_agent_positions,
         max_collect,
-        cheat_cost=500,
-        caught_probability=0.5,
+        cheating_cost=lambda point: 500 * 0.5,
         render_mode=None,
     ):
         """Initialize environment.
@@ -72,12 +71,9 @@ class raw_env(AECEnv):
             max_collect (list): List of maximum number of points that each
                 agent can collect. Index i corresponds to agent i given by
                 init_agent_positions.
-            cheat_cost (int, optional): Cost of cheating by collecting an
-                already collected point. Influences reward for collecting
-                points. Defaults to 500.
-            caught_probability (float, optional): Probability of getting
-                caught cheating. Influences reward for collecting points.
-                Defaults to 0.5.
+            cheating_cost (function, optional): Function that takes a point
+                and returns the cost of cheating by collecting that point.
+                Defaults to lambda point: 500 * 0.5.
             render_mode (str, optional): Render mode. Supported modes are
                 specified in environment's metadata["render_modes"] dict.
                 Defaults to None.
@@ -94,8 +90,7 @@ class raw_env(AECEnv):
         self.point_positions = point_positions
         self.agent_positions = init_agent_positions
         self.render_mode = render_mode
-        self.cheat_cost = cheat_cost
-        self.caught_probability = caught_probability
+        self.cheating_cost = cheating_cost
 
         self.reward_range = (-np.inf, 0)
 
@@ -415,17 +410,6 @@ class raw_env(AECEnv):
         return np.transpose(
             np.array(pygame.surfarray.pixels3d(scaled_surf)), axes=(1, 0, 2)
         )
-
-    def cheating_cost(self, point):
-        """Cost of cheating by collecting an already collected point.
-
-        Args:
-            point (Point): Point for which to compute cheating cost.
-
-        Returns:
-            float: Cost of cheating.
-        """
-        return self.cheat_cost * self.caught_probability
 
     def reward(self, collector, point):
         """Returns reward for collecting a given point.
