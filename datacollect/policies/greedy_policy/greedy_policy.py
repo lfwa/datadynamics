@@ -98,30 +98,33 @@ class GraphGreedyPolicy(BasePolicy):
             return None
 
         cur_node = self.env.collectors[agent].label
-        goal_path, goal_was_collected = self.cur_goals.get(agent, ([], False))
+        goal_path, points_in_goal_path_collected = self.cur_goals.get(
+            agent, ([], {})
+        )
 
-        # Update shortest paths if graph is not static.
+        # Update shortest paths and reset goals if graph is not static.
         if not self.env.static_graph:
             self.shortest_paths = dict(
                 nx.all_pairs_dijkstra_path(self.env.graph)
             )
+            goal_path = []
+            points_in_goal_path_collected = {}
 
         # Use cached goal if it exists and the point has not been collected
         #  since last time. Otherwise, find new goal.
-        if not (
-            goal_path
-            and self.env.static_graph
-            and (
-                goal_was_collected
-                == self.env.points[goal_path[-1]].is_collected()
-            )
+        if not goal_path or any(
+            [
+                collected != self.env.points[p].is_collected()
+                for p, collected in points_in_goal_path_collected.items()
+            ]
         ):
             best_reward = -np.inf
             goal_path = []
-            best_goal_was_collected = False
+            points_in_goal_path_collected = {}
 
             for node_label, point in self.env.points.items():
                 path = self.shortest_paths[cur_node][node_label]
+                points_in_path_collected = {}
                 # Ensure path exists.
                 if len(path) == 0:
                     continue
@@ -130,16 +133,22 @@ class GraphGreedyPolicy(BasePolicy):
                     if not nx.is_path(self.env.graph, [cur_node, path[0]]):
                         continue
                     reward = self.env.reward(cur_node, path[0])
+                    # Add to points in path
+                    points_in_path_collected[path[0]] = point.is_collected()
                 else:
                     reward = 0
                     for i in range(len(path) - 1):
                         reward += self.env.reward(path[i], path[i + 1])
+                        if path[i + 1] in self.env.points:
+                            points_in_path_collected[
+                                path[i + 1]
+                            ] = self.env.points[path[i + 1]].is_collected()
                     # Trim first node as it is the current node.
                     path = path[1:]
                 if reward > best_reward:
                     best_reward = reward
                     goal_path = path[:]
-                    best_goal_was_collected = point.is_collected()
-            self.cur_goals[agent] = (goal_path, best_goal_was_collected)
+                    points_in_goal_path_collected = points_in_path_collected
+            self.cur_goals[agent] = (goal_path, points_in_goal_path_collected)
 
         return goal_path.pop(0) if goal_path else None
