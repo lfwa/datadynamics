@@ -59,6 +59,7 @@ class raw_env(AECEnv):
         max_collect,
         nodes_per_row=None,
         cheating_cost=lambda node_label: 500 * 0.5,
+        collection_reward=lambda point_label: 100,
         static_graph=True,
         render_mode=None,
     ):
@@ -80,6 +81,9 @@ class raw_env(AECEnv):
                 label and returns the cost of cheating by collecting an
                 already collected point. Influences reward for collecting
                 points. Defaults to lambda node_label: 500 * 0.5.
+            collection_reward (function, optional): Function that takes a point
+                label and returns the reward for collecting that point.
+                Defaults to lambda point_label: 100.
             static_graph (bool, optional): Whether the underlying graph is
                 static and never changes. May influence performance of
                 policies as e.g. shortest paths will need to be recomputed for
@@ -103,6 +107,7 @@ class raw_env(AECEnv):
         self.init_agent_labels = init_agent_labels
         self.render_mode = render_mode
         self.cheating_cost = cheating_cost
+        self.collection_reward = collection_reward
         self.static_graph = static_graph
 
         if nodes_per_row is None:
@@ -469,8 +474,12 @@ class raw_env(AECEnv):
                 f"There is no edge between node {cur_node} and {new_node}. "
                 "Reward cannot be calculated."
             )
-        if new_node in self.points and self.points[new_node].is_collected():
-            cost += self.cheating_cost(new_node)
+        if new_node in self.points:
+            # Subtract reward for collecting a point.
+            cost -= self.collection_reward(new_node)
+            # Add cost for cheating if point has already been collected.
+            if self.points[new_node].is_collected():
+                cost += self.cheating_cost(new_node)
         # Return negated cost as reward since we are using a cost-based model.
         return -cost
 
