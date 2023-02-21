@@ -6,17 +6,13 @@ from datacollect.policies import greedy_policy_v0
 
 
 @pytest.mark.parametrize(
-    (
-        "point_positions, init_agent_positions, max_collect, cheat_cost, "
-        "caught_probability"
-    ),
+    ("point_positions, init_agent_positions, max_collect, cheating_cost"),
     [
         (
             np.array([[i, i] for i in range(100)]),
             np.array([[0, 0], [0, 0]]),
             [100, 100],
-            1000,
-            0.5,
+            lambda point: 1000 * 0.5,
         )
     ],
 )
@@ -24,15 +20,13 @@ def test_api(
     point_positions,
     init_agent_positions,
     max_collect,
-    cheat_cost,
-    caught_probability,
+    cheating_cost,
 ):
     env = collector_v0.env(
         point_positions=point_positions,
         init_agent_positions=init_agent_positions,
         max_collect=max_collect,
-        cheat_cost=cheat_cost,
-        caught_probability=caught_probability,
+        cheating_cost=cheating_cost,
         render_mode="rgb_array",
     )
     policy = greedy_policy_v0.policy(env=env)
