@@ -452,7 +452,9 @@ class raw_env(AECEnv):
         """Returns reward for moving from current node to new node.
 
         If the new node is a point that has already been collected, we add a
-        cost for cheating.
+        penalty for cheating.
+        The cost of moving is the weight of the edge between the current and
+        new node.
 
         Note:
             We use a cost-based model, so the reward is the negated cost.

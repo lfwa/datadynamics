@@ -57,6 +57,7 @@ class raw_env(AECEnv):
         init_agent_positions,
         max_collect,
         cheating_cost=lambda point: 500 * 0.5,
+        collection_reward=lambda point: 100,
         render_mode=None,
     ):
         """Initialize environment.
@@ -74,6 +75,9 @@ class raw_env(AECEnv):
             cheating_cost (function, optional): Function that takes a point
                 and returns the cost of cheating by collecting that point.
                 Defaults to lambda point: 500 * 0.5.
+            collection_reward (function, optional): Function that takes a
+                point and returns the reward of collecting that point.
+                Defaults to lambda point: 100.
             render_mode (str, optional): Render mode. Supported modes are
                 specified in environment's metadata["render_modes"] dict.
                 Defaults to None.
@@ -91,6 +95,7 @@ class raw_env(AECEnv):
         self.agent_positions = init_agent_positions
         self.render_mode = render_mode
         self.cheating_cost = cheating_cost
+        self.collection_reward = collection_reward
 
         self.reward_range = (-np.inf, 0)
 
@@ -414,7 +419,7 @@ class raw_env(AECEnv):
     def reward(self, collector, point):
         """Returns reward for collecting a given point.
 
-        If point has already been collected, we add a cost for cheating.
+        If point has already been collected, we add a penalty for cheating.
         The reward/cost is based on the Euclidean distance.
 
         Note:
@@ -428,6 +433,7 @@ class raw_env(AECEnv):
             float: Reward.
         """
         cost = np.linalg.norm(collector.position - point.position)
+        cost -= self.collection_reward(point)
         if point.is_collected():
             cost += self.cheating_cost(point)
         return -cost
