@@ -60,6 +60,8 @@ class raw_env(AECEnv):
         nodes_per_row=None,
         cheating_cost=lambda node_label: 500 * 0.5,
         collection_reward=lambda point_label: 100,
+        reveal_cheating_cost=True,
+        reveal_collection_reward=True,
         static_graph=True,
         render_mode=None,
     ):
@@ -84,6 +86,11 @@ class raw_env(AECEnv):
             collection_reward (function, optional): Function that takes a point
                 label and returns the reward for collecting that point.
                 Defaults to lambda point_label: 100.
+            reveal_cheating_cost (bool, optional): Whether to reveal the
+                cheating costs to the agent in observations. Defaults to True.
+            reveal_collection_reward (bool, optional): Whether to reveal the
+                collection rewards to the agent in observations. Defaults to
+                True.
             static_graph (bool, optional): Whether the underlying graph is
                 static and never changes. May influence performance of
                 policies as e.g. shortest paths will need to be recomputed for
@@ -108,6 +115,8 @@ class raw_env(AECEnv):
         self.render_mode = render_mode
         self.cheating_cost = cheating_cost
         self.collection_reward = collection_reward
+        self.reveal_cheating_cost = reveal_cheating_cost
+        self.reveal_collection_reward = reveal_collection_reward
         self.static_graph = static_graph
 
         if nodes_per_row is None:
@@ -142,6 +151,8 @@ class raw_env(AECEnv):
             len(self.graph.nodes),
             len(self.point_labels),
             self.agents,
+            self.reveal_cheating_cost,
+            self.reveal_collection_reward,
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
         )
@@ -254,6 +265,8 @@ class raw_env(AECEnv):
         n_nodes,
         n_points,
         agents,
+        reveal_cheating_cost,
+        reveal_collection_reward,
         screen_width,
         screen_height,
     ):
@@ -268,48 +281,60 @@ class raw_env(AECEnv):
             n_nodes (int): Number of nodes in the graph.
             n_points (int): Number of points in the graph.
             agents (list[str]): List of agent names.
+            reveal_cheating_cost (bool): Whether to include cheating cost.
+            reveal_collection_reward (bool): Whether to include collection
+                rewards.
             screen_width (int): Width of display screen.
             screen_height (int): Height of display screen.
 
         Returns:
             dict: Dictionary of observation spaces keyed by agent name.
         """
-        observation_spaces = {
-            agent: gymnasium.spaces.Dict(
-                {
-                    # Adjacency matrix representing the underlying graph.
-                    "graph": gymnasium.spaces.Box(
-                        low=0,
-                        high=np.inf,
-                        shape=(n_nodes, n_nodes),
-                        dtype=np.float64,
-                    ),
-                    # List of node labels, where points/collectors are located.
-                    "point_labels": gymnasium.spaces.Box(
-                        low=0, high=n_nodes, shape=(n_points,), dtype=int
-                    ),
-                    "collector_labels": gymnasium.spaces.Box(
-                        low=0, high=n_nodes, shape=(len(agents),), dtype=int
-                    ),
-                    # No. of times each point has been collected.
-                    "collected": gymnasium.spaces.Box(
-                        low=0, high=np.inf, shape=(n_points,), dtype=int
-                    ),
-                    "image": gymnasium.spaces.Box(
-                        low=0,
-                        high=255,
-                        shape=(screen_width, screen_height, 3),
-                        dtype=np.uint8,
-                    ),
-                    # Action mask for the current agent representing valid
-                    # actions in the current state.
-                    "action_mask": gymnasium.spaces.Box(
-                        low=0, high=1, shape=(n_nodes,), dtype=int
-                    ),
-                }
-            )
-            for agent in agents
+        spaces = {
+            # Adjacency matrix representing the underlying graph.
+            "graph": gymnasium.spaces.Box(
+                low=0,
+                high=np.inf,
+                shape=(n_nodes, n_nodes),
+                dtype=np.float64,
+            ),
+            # List of node labels, where points/collectors are located.
+            "point_labels": gymnasium.spaces.Box(
+                low=0, high=n_nodes, shape=(n_points,), dtype=int
+            ),
+            "collector_labels": gymnasium.spaces.Box(
+                low=0, high=n_nodes, shape=(len(agents),), dtype=int
+            ),
+            # No. of times each point has been collected.
+            "collected": gymnasium.spaces.Box(
+                low=0, high=np.inf, shape=(n_points,), dtype=int
+            ),
+            "image": gymnasium.spaces.Box(
+                low=0,
+                high=255,
+                shape=(screen_width, screen_height, 3),
+                dtype=np.uint8,
+            ),
+            # Action mask for the current agent representing valid
+            # actions in the current state.
+            "action_mask": gymnasium.spaces.Box(
+                low=0, high=1, shape=(n_nodes,), dtype=int
+            ),
         }
+
+        if reveal_cheating_cost:
+            spaces["cheating_cost"] = gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(n_points,), dtype=np.float64
+            )
+        if reveal_collection_reward:
+            spaces["collection_reward"] = gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(n_points,), dtype=np.float64
+            )
+
+        observation_spaces = {
+            agent: gymnasium.spaces.Dict(spaces) for agent in agents
+        }
+
         return observation_spaces
 
     def _get_state_space(
@@ -356,6 +381,18 @@ class raw_env(AECEnv):
                     high=255,
                     shape=(screen_width, screen_height, 3),
                     dtype=np.uint8,
+                ),
+                "cheating_cost": gymnasium.spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(n_points,),
+                    dtype=np.float64,
+                ),
+                "collection_reward": gymnasium.spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(n_points,),
+                    dtype=np.float64,
                 ),
             }
         )
@@ -485,13 +522,23 @@ class raw_env(AECEnv):
         # Return negated cost as reward since we are using a cost-based model.
         return -cost
 
-    def _state(self, graph, points, collectors):
+    def _state(
+        self,
+        graph,
+        points,
+        collectors,
+        reveal_cheating_cost,
+        reveal_collection_reward,
+    ):
         """Retrieves state of the current global environment.
 
         Args:
             graph (networkx.Graph): Graph representing the environment.
             points (dict): Dictionary of points keyed by node labels.
             collectors (dict): Dictionary of collectors keyed by agent names.
+            reveal_cheating_cost (bool): Whether to reveal cheating cost.
+            reveal_collection_reward (bool): Whether to reveal collection
+                reward.
 
         Returns:
             dict: Current global state.
@@ -511,6 +558,19 @@ class raw_env(AECEnv):
             ),
             "image": self._render(render_mode="rgb_array"),
         }
+        if reveal_cheating_cost:
+            state["cheating_cost"] = np.array(
+                [self.cheating_cost(point.label) for point in points.values()],
+                dtype=np.float64,
+            )
+        if reveal_collection_reward:
+            state["collection_reward"] = np.array(
+                [
+                    self.collection_reward(point.label)
+                    for point in points.values()
+                ],
+                dtype=np.float64,
+            )
         return state
 
     def _get_action_mask(self, agent):
@@ -540,12 +600,20 @@ class raw_env(AECEnv):
         # pettingzoo/test/api_test.py:60: UserWarning: Observation is not
         # NumPy array
         # warnings.warn("Observation is not NumPy array")
-        obs = self._state(self.graph, self.points, self.collectors)
+        obs = self._state(
+            self.graph,
+            self.points,
+            self.collectors,
+            self.reveal_cheating_cost,
+            self.reveal_collection_reward,
+        )
         obs["action_mask"] = self._get_action_mask(agent)
         return obs
 
     def state(self):
-        return self._state(self.graph, self.points, self.collectors)
+        return self._state(
+            self.graph, self.points, self.collectors, True, True
+        )
 
     def reset(self, seed=None, return_info=False, options=None):
         if seed is not None:

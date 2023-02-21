@@ -15,7 +15,7 @@ from datacollect.environments import collector_v0
         )
     ],
 )
-def test_api(point_positions, init_agent_positions, max_collect):
+def test_api_collector(point_positions, init_agent_positions, max_collect):
     env = collector_v0.env(
         point_positions=point_positions,
         init_agent_positions=init_agent_positions,

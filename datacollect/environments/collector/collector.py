@@ -58,6 +58,8 @@ class raw_env(AECEnv):
         max_collect,
         cheating_cost=lambda point: 500 * 0.5,
         collection_reward=lambda point: 100,
+        reveal_cheating_cost=True,
+        reveal_collection_reward=True,
         render_mode=None,
     ):
         """Initialize environment.
@@ -78,6 +80,11 @@ class raw_env(AECEnv):
             collection_reward (function, optional): Function that takes a
                 point and returns the reward of collecting that point.
                 Defaults to lambda point: 100.
+            reveal_cheating_cost (bool, optional): Whether to reveal the
+                cheating costs to the agent in observations. Defaults to True.
+            reveal_collection_reward (bool, optional): Whether to reveal the
+                collection rewards to the agent in observations. Defaults to
+                True.
             render_mode (str, optional): Render mode. Supported modes are
                 specified in environment's metadata["render_modes"] dict.
                 Defaults to None.
@@ -96,6 +103,8 @@ class raw_env(AECEnv):
         self.render_mode = render_mode
         self.cheating_cost = cheating_cost
         self.collection_reward = collection_reward
+        self.reveal_cheating_cost = reveal_cheating_cost
+        self.reveal_collection_reward = reveal_collection_reward
 
         self.reward_range = (-np.inf, 0)
 
@@ -123,6 +132,8 @@ class raw_env(AECEnv):
             self.agents,
             self.agent_positions,
             self.point_positions,
+            self.reveal_cheating_cost,
+            self.reveal_collection_reward,
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
         )
@@ -174,13 +185,22 @@ class raw_env(AECEnv):
         return boundary_low, boundary_high
 
     def _get_obs_state_space(
-        self, agent_positions, point_positions, screen_width, screen_height
+        self,
+        agent_positions,
+        point_positions,
+        reveal_cheating_cost,
+        reveal_collection_reward,
+        screen_width,
+        screen_height,
     ):
         """Retrieves global observation/state space.
 
         Args:
             agent_positions (np.ndarray): Agent positions.
             point_positions (np.ndarray): Point positions.
+            reveal_cheating_cost (bool): Whether to include cheating cost.
+            reveal_collection_reward (bool): Whether to include collection
+                rewards.
             screen_width (int): Width of display screen.
             screen_height (int): Height of display screen.
 
@@ -196,27 +216,36 @@ class raw_env(AECEnv):
             shape=(len(agent_positions), 2),
         )
 
-        space = gymnasium.spaces.Dict(
-            {
-                "point_positions": gymnasium.spaces.Box(
-                    low=point_boundary_low,
-                    high=point_boundary_high,
-                    dtype=np.float64,
-                ),
-                "collected": gymnasium.spaces.Box(
-                    low=0, high=np.inf, shape=(n_points,), dtype=int
-                ),
-                "collector_positions": gymnasium.spaces.Box(
-                    low=boundary_low, high=boundary_high, dtype=np.float64
-                ),
-                "image": gymnasium.spaces.Box(
-                    low=0,
-                    high=255,
-                    shape=(screen_width, screen_height, 3),
-                    dtype=np.uint8,
-                ),
-            }
-        )
+        spaces = {
+            "point_positions": gymnasium.spaces.Box(
+                low=point_boundary_low,
+                high=point_boundary_high,
+                dtype=np.float64,
+            ),
+            "collected": gymnasium.spaces.Box(
+                low=0, high=np.inf, shape=(n_points,), dtype=int
+            ),
+            "collector_positions": gymnasium.spaces.Box(
+                low=boundary_low, high=boundary_high, dtype=np.float64
+            ),
+            "image": gymnasium.spaces.Box(
+                low=0,
+                high=255,
+                shape=(screen_width, screen_height, 3),
+                dtype=np.uint8,
+            ),
+        }
+
+        if reveal_cheating_cost:
+            spaces["cheating_cost"] = gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(n_points,), dtype=np.float64
+            )
+        if reveal_collection_reward:
+            spaces["collection_reward"] = gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(n_points,), dtype=np.float64
+            )
+
+        space = gymnasium.spaces.Dict(spaces)
 
         return space
 
@@ -242,6 +271,8 @@ class raw_env(AECEnv):
         agents,
         agent_positions,
         point_positions,
+        reveal_cheating_cost,
+        reveal_collection_reward,
         screen_width,
         screen_height,
     ):
@@ -257,6 +288,9 @@ class raw_env(AECEnv):
             agents (list[str]): List of agent names.
             agent_positions (np.ndarray): Agent positions.
             point_positions (np.ndarray): Point positions.
+            reveal_cheating_cost (bool): Whether to include cheating cost.
+            reveal_collection_reward (bool): Whether to include collection
+                rewards.
             screen_width (int): Width of display screen.
             screen_height (int): Height of display screen.
 
@@ -265,7 +299,12 @@ class raw_env(AECEnv):
         """
         observation_spaces = {
             agent: self._get_obs_state_space(
-                agent_positions, point_positions, screen_width, screen_height
+                agent_positions,
+                point_positions,
+                reveal_cheating_cost,
+                reveal_collection_reward,
+                screen_width,
+                screen_height,
             )
             for agent in agents
         }
@@ -286,7 +325,12 @@ class raw_env(AECEnv):
             gymnasium.spaces.Dict: State space.
         """
         state_space = self._get_obs_state_space(
-            agent_positions, point_positions, screen_width, screen_height
+            agent_positions,
+            point_positions,
+            True,
+            True,
+            screen_width,
+            screen_height,
         )
         return state_space
 
@@ -438,12 +482,21 @@ class raw_env(AECEnv):
             cost += self.cheating_cost(point)
         return -cost
 
-    def _state(self, points, collectors):
+    def _state(
+        self,
+        points,
+        collectors,
+        reveal_cheating_cost,
+        reveal_collection_reward,
+    ):
         """Retrieves state of the current global environment.
 
         Args:
             points (list[Point]): List of points in the environment.
             collectors (dict): Dictionary of collectors.
+            reveal_cheating_cost (bool): Whether to reveal cheating cost.
+            reveal_collection_reward (bool): Whether to reveal collection
+                reward.
 
         Returns:
             dict: Current global state.
@@ -461,6 +514,16 @@ class raw_env(AECEnv):
             ),
             "image": self._render(render_mode="rgb_array"),
         }
+        if reveal_cheating_cost:
+            state["cheating_cost"] = np.array(
+                [self.cheating_cost(point) for point in points],
+                dtype=np.float64,
+            )
+        if reveal_collection_reward:
+            state["collection_reward"] = np.array(
+                [self.collection_reward(point) for point in points],
+                dtype=np.float64,
+            )
         return state
 
     def observe(self, agent):
@@ -469,10 +532,15 @@ class raw_env(AECEnv):
         # pettingzoo/test/api_test.py:60: UserWarning: Observation is not
         # NumPy array
         # warnings.warn("Observation is not NumPy array")
-        return self._state(self.points, self.collectors)
+        return self._state(
+            self.points,
+            self.collectors,
+            self.reveal_cheating_cost,
+            self.reveal_collection_reward,
+        )
 
     def state(self):
-        return self._state(self.points, self.collectors)
+        return self._state(self.points, self.collectors, True, True)
 
     def reset(self, seed=None, return_info=False, options=None):
         if seed is not None:
@@ -500,8 +568,7 @@ class raw_env(AECEnv):
         self.infos = {agent: {} for agent in self.agents}
         self.cumulative_rewards = {agent: 0 for agent in self.agents}
 
-        obs = self._state(self.points, self.collectors)
-        observations = {agent: obs for agent in self.agents}
+        observations = {agent: self.observe(agent) for agent in self.agents}
 
         if not return_info:
             return observations
