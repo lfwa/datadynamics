@@ -54,5 +54,4 @@ def from_image_array(image_array, inverted=False):
         [_represents_points(pixel, inverted=inverted) for pixel in image_array]
     )
     point_labels = np.nonzero(points)[0]
-    print(point_labels)
     return list(point_labels)
