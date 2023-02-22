@@ -1,5 +1,4 @@
-import logging
-
+import gymnasium
 import networkx as nx
 import numpy as np
 
@@ -78,19 +77,19 @@ class GraphGreedyPolicy(BasePolicy):
             env.metadata["name"] == "graph_collector"
         ), "GraphGreedyPolicy is only compatible with graph_collector."
 
-        logging.info("Initializing GraphOptimalPolicy...")
+        gymnasium.logger.info("Initializing GraphOptimalPolicy...")
         self.env = env
         if self.env.static_graph:
-            logging.info(
+            gymnasium.logger.info(
                 " - Computing and caching shortest paths. This runs in O(V^3) "
                 "and may take a while..."
             )
             self.shortest_paths = dict(
                 nx.all_pairs_dijkstra_path(self.env.graph)
             )
-        # cur_goals consist of (path, point_was_collected) keyed by agent.
+        # cur_goals consist of (path, point_in_path_collected) keyed by agent.
         self.cur_goals = {}
-        logging.info("Completed initialization.")
+        gymnasium.logger.info("Completed initialization.")
 
     def action(self, observation, agent):
         if self.env.terminations[agent] or self.env.truncations[agent]:
@@ -123,7 +122,9 @@ class GraphGreedyPolicy(BasePolicy):
             points_in_goal_path_collected = {}
 
             for node_label, point in self.env.points.items():
-                path = self.shortest_paths[cur_node][node_label]
+                path = self.shortest_paths.get(cur_node, {}).get(
+                    node_label, []
+                )
                 points_in_path_collected = {}
                 # Ensure path exists.
                 if len(path) == 0:
@@ -149,6 +150,11 @@ class GraphGreedyPolicy(BasePolicy):
                     best_reward = reward
                     goal_path = path[:]
                     points_in_goal_path_collected = points_in_path_collected
+            if not goal_path:
+                gymnasium.logger.warn(
+                    f"{agent} cannot reach any points and will issue None "
+                    "actions."
+                )
             self.cur_goals[agent] = (goal_path, points_in_goal_path_collected)
 
         return goal_path.pop(0) if goal_path else None

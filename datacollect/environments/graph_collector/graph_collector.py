@@ -92,14 +92,16 @@ class raw_env(AECEnv):
                 collection rewards to the agent in observations. Defaults to
                 True.
             static_graph (bool, optional): Whether the underlying graph is
-                static and never changes. May influence performance of
-                policies as e.g. shortest paths will need to be recomputed for
-                every action to determine optimal agent movement. Defaults to
-                True.
+                static and never changes. Significantly impacts performance
+                as underlying adjacency matrix have to be recomputed in
+                every step. May also influence performance of policies as e.g.
+                shortest paths will need to be recomputed for every action to
+                determine optimal agent movement. Defaults to True.
             render_mode (str, optional): Render mode. Supported modes are
                 specified in environment's metadata["render_modes"] dict.
                 Defaults to None.
         """
+        gymnasium.logger.info("Initializing graph collector environment...")
         assert (
             render_mode in self.metadata["render_modes"] or render_mode is None
         ), (
@@ -107,6 +109,7 @@ class raw_env(AECEnv):
             f"Supported modes: {self.metadata['render_modes']}"
         )
 
+        gymnasium.logger.info(" - Validating input positions...")
         if len(graph.nodes) > 1:
             # Ensure that all points are in nodes that have at least one
             # neighbor, i.e. are not obstacles.
@@ -121,9 +124,11 @@ class raw_env(AECEnv):
                 for agent_label in init_agent_labels
             ), "Agent labels must not encode obstacles!"
 
+        gymnasium.logger.info(" - Seeding environment...")
         self.seed()
 
         self.graph = graph
+        self.adjacency_matrix = nx.to_numpy_array(self.graph)
         self.point_labels = point_labels
         self.init_agent_labels = init_agent_labels
         self.render_mode = render_mode
@@ -158,9 +163,11 @@ class raw_env(AECEnv):
             agent: max_collect[i] for i, agent in enumerate(self.agents)
         }
 
+        gymnasium.logger.info(" - Setting up action spaces...")
         self.action_spaces = self._get_action_spaces(
             self.agents, self.graph.nodes
         )
+        gymnasium.logger.info(" - Setting up observation spaces...")
         self.observation_spaces = self._get_observation_spaces(
             len(self.graph.nodes),
             len(self.point_labels),
@@ -170,6 +177,7 @@ class raw_env(AECEnv):
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
         )
+        gymnasium.logger.info(" - Setting up state space...")
         self.state_space = self._get_state_space(
             len(self.graph.nodes),
             len(self.point_labels),
@@ -199,6 +207,8 @@ class raw_env(AECEnv):
         self.clock = None
         self.surf = None
         self.isopen = False
+
+        gymnasium.logger.info("Environment initialized.")
 
     def _get_node_shape(
         self, n_nodes, nodes_per_row, screen_width, screen_height
@@ -231,8 +241,7 @@ class raw_env(AECEnv):
             dict: Dictionary of discrete action spaces.
         """
         action_spaces = {
-            agent: gymnasium.spaces.Discrete(len(nodes), start=min(nodes))
-            for agent in agents
+            agent: gymnasium.spaces.Discrete(len(nodes)) for agent in agents
         }
 
         def sample(mask=None):
@@ -558,7 +567,9 @@ class raw_env(AECEnv):
             dict: Current global state.
         """
         state = {
-            "graph": nx.to_numpy_array(graph),
+            "graph": self.adjacency_matrix
+            if self.static_graph
+            else nx.to_numpy_array(graph),
             "point_labels": np.array(
                 [point.label for point in points.values()], dtype=int
             ),
