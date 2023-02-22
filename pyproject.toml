@@ -16,6 +16,8 @@ numpy = "^1.24.2"
 gymnasium = "^0.27.1"
 matplotlib = "^3.6.3"
 networkx = {extras = ["default"], version = "^3.0"}
+pillow = "^9.4.0"
+tqdm = "^4.64.1"
 
 
 [tool.poetry.group.dev.dependencies]
