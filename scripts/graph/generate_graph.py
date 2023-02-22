@@ -5,14 +5,6 @@ mask file. Obstacles are encoding by black as default. The input obstacle mask
 file should be a binary image or an image that can be converted to one. The
 file should be a mask that represents the obstacles in the grid-like
 environment that the agent cannot traverse through.
-
-Example usage:
-python -m datacollect.scripts.graph.generate_graph \
-    -i ./data/obstacle_mask.png \
-    -o ./data/graph.pkl \
-    -m ./data/metadata.json \
-    -rs 100 100 \
-    -dfw 1.0
 """
 import argparse
 import json
@@ -22,6 +14,16 @@ from datacollect.utils.graph_utils import graph_extractor
 
 
 def main(args):
+    """Generate graph from obstacle mask file.
+
+    Example usage:
+    python -m datacollect.scripts.graph.generate_graph \
+        -i ./data/obstacle_mask.png \
+        -o ./data/graph.pkl \
+        -m ./data/metadata.json \
+        -rs 100 100 \
+        -dfw 1.0
+    """
     graph, metadata = graph_extractor.from_mask_file(
         args.input_file,
         resize=args.resize,

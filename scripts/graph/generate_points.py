@@ -4,12 +4,6 @@ This script generates point labels used to represent points in a grid-like
 environment structure from a point mask file. Points are encoding by black as
 default. The input point mask file should be a binary image or an image that
 can be converted to one.
-
-Example usage:
-python -m datacollect.scripts.graph.generate_points \
-    -i ./data/point_mask.png \
-    -o ./data/point_labels.pkl \
-    -rs 100 100
 """
 import argparse
 import pickle
@@ -18,6 +12,14 @@ from datacollect.utils.graph_utils import point_extractor
 
 
 def main(args):
+    """Generate point labels from point mask file.
+
+    Example usage:
+    python -m datacollect.scripts.graph.generate_points \
+        -i ./data/point_mask.png \
+        -o ./data/point_labels.pkl \
+        -rs 100 100
+    """
     point_labels = point_extractor.from_mask_file(
         args.input_file,
         resize=args.resize,

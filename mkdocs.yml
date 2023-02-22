@@ -57,3 +57,4 @@ nav:
   - API:
       - api/environments.md
       - api/policies.md
+      - api/scripts.md
