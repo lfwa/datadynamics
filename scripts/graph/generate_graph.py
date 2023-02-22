@@ -1,13 +1,14 @@
 """Script to generate input graphs to the graph_collector_v0 environment.
 
-This script generates a graph from an obstacle mask file with a grid-like
-structure. The input obstacle mask file should be a binary image or an image
-that can be converted to one. The file should be a mask that represents the
-obstacles in the grid-like environment that the agent cannot traverse through.
+This script generates a graph  with a grid-like structure from an obstacle
+mask file. Obstacles are encoding by black as default. The input obstacle mask
+file should be a binary image or an image that can be converted to one. The
+file should be a mask that represents the obstacles in the grid-like
+environment that the agent cannot traverse through.
 
 Example usage:
 python -m datacollect.scripts.graph.generate_graph \
-    -omf ./data/obstacle_mask.png \
+    -i ./data/obstacle_mask.png \
     -o ./data/graph.pkl \
     -m ./data/metadata.json \
     -rs 100 100 \
@@ -17,12 +18,12 @@ import argparse
 import json
 import pickle
 
-from datacollect.utils.graph_utils import grapher
+from datacollect.utils.graph_utils import graph_extractor
 
 
 def main(args):
-    graph, metadata = grapher.from_mask_file(
-        args.obstacle_mask_file,
+    graph, metadata = graph_extractor.from_mask_file(
+        args.input_file,
         resize=args.resize,
         default_weight=args.default_weight,
         inverted=args.inverted,
@@ -39,8 +40,8 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-omf",
-        "--obstacle_mask_file",
+        "-i",
+        "--input_file",
         type=str,
         help="Obstacle mask file to generate graph from",
         required=True,
@@ -63,7 +64,10 @@ if __name__ == "__main__":
         "-inv",
         "--inverted",
         action="store_true",
-        help="Enable inverted obstacle mask where black is obstacle and white is free space",
+        help=(
+            "Enable inverted obstacle mask where white are obstacles and "
+            "black is free space"
+        ),
     )
     parser.add_argument(
         "-rs",

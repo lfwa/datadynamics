@@ -32,10 +32,10 @@ def from_mask_file(filename, resize=None, default_weight=1.0, inverted=False):
             Defaults to None (no resizing).
         default_weight (float, optional): Default weight of added edges.
             Defaults to 1.0.
-        inverted (bool, optional): Invert obstacle representations. If set to
-            False then 0/False represents obstacles, i.e., nodes with no
-            incoming or outgoing edges. Similarly, if set to True then 1/True
-            represents obstacles.
+        inverted (bool, optional): Invert obstacle representations. By default
+            (False), 0/False are used to represent obstacles, i.e., nodes with
+            no incoming or outgoing edges. If enabled (True), 1/True are used
+            to represent obstacles instead.
 
     Returns:
         tuple(nx.Graph, dict): Tuple of weighted undirected graph representing
@@ -62,10 +62,10 @@ def from_image_array(image_array, default_weight=1.0, inverted=False):
         image_array (np.ndarray): Binary image array to generate graph from.
         default_weight (float, optional): Default weight of added edges.
             Defaults to 1.0.
-        inverted (bool, optional): Invert obstacle representations. If set to
-            False then 0/False represents obstacles, i.e., nodes with no
-            incoming or outgoing edges. Similarly, if set to True then 1/True
-            represents obstacles.
+        inverted (bool, optional): Invert obstacle representations. By default
+            (False), 0/False are used to represent obstacles, i.e., nodes with
+            no incoming or outgoing edges. If enabled (True), 1/True are used
+            to represent obstacles instead.
 
     Returns:
         tuple(nx.Graph, dict): Tuple of weighted undirected graph representing
