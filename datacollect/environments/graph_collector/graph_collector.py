@@ -107,6 +107,20 @@ class raw_env(AECEnv):
             f"Supported modes: {self.metadata['render_modes']}"
         )
 
+        if len(graph.nodes) > 1:
+            # Ensure that all points are in nodes that have at least one
+            # neighbor, i.e. are not obstacles.
+            assert all(
+                any(True for _ in nx.neighbors(graph, point_label))
+                for point_label in point_labels
+            ), "Point labels must not encode obstacles!"
+            # Ensure that all agents spawn in nodes that have at least one
+            # neighbor, i.e. are not obstacles.
+            assert all(
+                any(True for _ in nx.neighbors(graph, agent_label))
+                for agent_label in init_agent_labels
+            ), "Agent labels must not encode obstacles!"
+
         self.seed()
 
         self.graph = graph
