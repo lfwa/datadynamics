@@ -63,6 +63,7 @@ class raw_env(AECEnv):
         reveal_cheating_cost=True,
         reveal_collection_reward=True,
         static_graph=True,
+        dynamic_display=False,
         render_mode=None,
     ):
         """Initializes the graph collector environment.
@@ -97,6 +98,8 @@ class raw_env(AECEnv):
                 every step. May also influence performance of policies as e.g.
                 shortest paths will need to be recomputed for every action to
                 determine optimal agent movement. Defaults to True.
+            dynamic_display (bool, optional): Whether to dynamically adjust
+                the display size to the graph size. Defaults to False.
             render_mode (str, optional): Render mode. Supported modes are
                 specified in environment's metadata["render_modes"] dict.
                 Defaults to None.
@@ -141,6 +144,14 @@ class raw_env(AECEnv):
         if nodes_per_row is None:
             nodes_per_row = math.ceil(math.sqrt(len(self.graph.nodes)))
         self.nodes_per_row = nodes_per_row
+
+        # For dynamic displaying, we adjust the screen width s.t.
+        # nodes are displayed as squares.
+        if dynamic_display:
+            global SCREEN_WIDTH
+            rows = math.ceil(len(self.graph.nodes) / nodes_per_row)
+            aspect_ratio = self.nodes_per_row / rows
+            SCREEN_WIDTH = int(SCREEN_HEIGHT * aspect_ratio)
 
         self.node_width, self.node_height = self._get_node_shape(
             len(self.graph.nodes),
@@ -765,9 +776,16 @@ class raw_env(AECEnv):
         if self.screen is None and render_mode == "human":
             pygame.init()
             pygame.display.init()
-            self.screen = pygame.display.set_mode(
-                (SCREEN_WIDTH, SCREEN_HEIGHT)
-            )
+            try:
+                self.screen = pygame.display.set_mode(
+                    (SCREEN_WIDTH, SCREEN_HEIGHT)
+                )
+            except Exception as e:
+                gymnasium.logger.error(
+                    f"Could not initialize pygame display: {e}. If "
+                    "`dynamic_display` is enabled, try disabling it."
+                )
+                raise e
         if self.clock is None:
             self.clock = pygame.time.Clock()
 
