@@ -835,12 +835,12 @@ class raw_env(AECEnv):
                 f"Cheated: {overall_cheated}"
             ),
             True,
-            (0, 0, 0),
+            (0, 0, 255),
         )
         text2 = font.render(
             f"Total cumulative reward: {total_reward}",
             True,
-            (0, 0, 0),
+            (0, 0, 255),
         )
         surf.blit(text1, (10, 10))
         surf.blit(text2, (10, 40))
