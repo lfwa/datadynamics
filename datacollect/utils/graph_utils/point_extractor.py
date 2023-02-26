@@ -9,7 +9,7 @@ def _represents_points(pixel, inverted=False):
     return not (pixel ^ inverted)
 
 
-def from_mask_file(filename, resize=None, inverted=False):
+def from_mask_file(filename, resize=None, inverted=False, flip=False):
     """Returns point labels from an image file representing point mask.
 
     Args:
@@ -20,6 +20,7 @@ def from_mask_file(filename, resize=None, inverted=False):
         inverted (bool, optional): Invert point representations. By default
             (False), 0/False are used to represent points. If enabled (True),
             1/True are used to represent points instead.
+        flip (bool, optional): Flip image vertically. Defaults to False.
 
     Returns:
         list: List of point labels.
@@ -30,6 +31,8 @@ def from_mask_file(filename, resize=None, inverted=False):
     # Convert to binary image.
     image = image.convert("1")
     image_array = np.array(image)
+    if flip:
+        image_array = np.flip(image_array, axis=0)
     point_labels = from_image_array(image_array, inverted=inverted)
     return point_labels
 

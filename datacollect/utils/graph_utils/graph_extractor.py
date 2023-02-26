@@ -22,7 +22,9 @@ def _get_neighbors(i, j, m, n):
     return neighbors
 
 
-def from_mask_file(filename, resize=None, default_weight=1.0, inverted=False):
+def from_mask_file(
+    filename, resize=None, default_weight=1.0, inverted=False, flip=False
+):
     """Generate graph from an image file representing obstacle mask.
 
     Args:
@@ -36,6 +38,7 @@ def from_mask_file(filename, resize=None, default_weight=1.0, inverted=False):
             (False), 0/False are used to represent obstacles, i.e., nodes with
             no incoming or outgoing edges. If enabled (True), 1/True are used
             to represent obstacles instead.
+        flip (bool, optional): Flip image vertically. Defaults to False.
 
     Returns:
         tuple(nx.Graph, dict): Tuple of weighted undirected graph representing
@@ -47,11 +50,14 @@ def from_mask_file(filename, resize=None, default_weight=1.0, inverted=False):
     # Convert to binary image.
     image = image.convert("1")
     image_array = np.array(image)
+    if flip:
+        image_array = np.flip(image_array, axis=0)
     graph, metadata = from_image_array(
         image_array, default_weight=default_weight, inverted=inverted
     )
     metadata["obstacle_mask_file"] = filename
     metadata["resize"] = resize
+    metadata["flip"] = flip
     return graph, metadata
 
 
@@ -74,6 +80,8 @@ def from_image_array(image_array, default_weight=1.0, inverted=False):
     graph = nx.Graph()
     graph.add_nodes_from(range(image_array.size))
     m, n = image_array.shape
+    obstacle_node_labels = []
+    free_node_labels = []
 
     # Add weighted edges to graph between adjacent grid cells in image array.
     with tqdm.tqdm(total=m * n, desc="Adding edges to graph") as pbar:
@@ -85,6 +93,7 @@ def from_image_array(image_array, default_weight=1.0, inverted=False):
 
                 # Add self loop for non-obstacles.
                 if not obstacle:
+                    free_node_labels.append(node_label)
                     graph.add_edge(
                         node_label, node_label, weight=default_weight
                     )
@@ -92,6 +101,7 @@ def from_image_array(image_array, default_weight=1.0, inverted=False):
                     # Add edges to neighbors for non-obstacles.
                     for neighbor in neighbors:
                         n_i, n_j = neighbor
+                        neighbor_node_label = n_i * n + n_j
                         n_obstacle = _represents_obstacle(
                             image_array[n_i, n_j], inverted
                         )
@@ -99,9 +109,11 @@ def from_image_array(image_array, default_weight=1.0, inverted=False):
                         if not n_obstacle:
                             graph.add_edge(
                                 node_label,
-                                n_i * n + n_j,
+                                neighbor_node_label,
                                 weight=default_weight,
                             )
+                else:
+                    obstacle_node_labels.append(node_label)
                 pbar.update(1)
     metadata = {
         "default_weight": default_weight,
@@ -109,5 +121,7 @@ def from_image_array(image_array, default_weight=1.0, inverted=False):
         "nodes_per_row": image_array.shape[1],
         "nodes_per_col": image_array.shape[0],
         "nodes": len(graph.nodes),
+        "obstacle_node_labels": obstacle_node_labels,
+        "free_node_labels": free_node_labels,
     }
     return graph, metadata

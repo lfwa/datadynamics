@@ -24,6 +24,7 @@ def main(args):
         args.input_file,
         resize=args.resize,
         inverted=args.inverted,
+        flip=args.flip,
     )
 
     with open(args.output_file, "wb") as f:
@@ -59,6 +60,12 @@ if __name__ == "__main__":
         type=int,
         nargs=2,
         help="Resize image to specified width and height",
+    )
+    parser.add_argument(
+        "-flip",
+        "--flip",
+        action="store_true",
+        help="Vertically flip the image",
     )
     args = parser.parse_args()
 

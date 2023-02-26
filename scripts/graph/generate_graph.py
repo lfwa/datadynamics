@@ -29,6 +29,7 @@ def main(args):
         resize=args.resize,
         default_weight=args.default_weight,
         inverted=args.inverted,
+        flip=args.flip,
     )
 
     with open(args.output_file, "wb") as f:
@@ -84,6 +85,12 @@ if __name__ == "__main__":
         type=float,
         help="Default weight of added edges",
         default=1.0,
+    )
+    parser.add_argument(
+        "-flip",
+        "--flip",
+        action="store_true",
+        help="Vertically flip the image",
     )
     args = parser.parse_args()
 
