@@ -14,10 +14,10 @@ FPS = 120
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
 # Rendering sizes.
-POINT_SIZE = 20
+POINT_SIZE = 10
 PATH_SIZE = 2
 COLLECTOR_SIZE = 4
-COLLECTOR_LEN = 25
+COLLECTOR_LEN = 15
 FONT_SIZE = 20
 
 
@@ -73,7 +73,8 @@ class raw_env(AECEnv):
                 defining the environment. Node labels must be a continuous set
                 of integers starting at 0.
             point_labels (list[int]): List of node labels to identify
-                collectable points.
+                collectable points. All duplicate labels will be merged when
+                creating points in the environment.
             init_agent_labels (list[int]): List of node labels to identify
                 initial agent positions.
             max_collect (list[int]): List of maximum number of points each
@@ -113,26 +114,38 @@ class raw_env(AECEnv):
         )
 
         gymnasium.logger.info(" - Validating input positions...")
-        if len(graph.nodes) > 1:
-            # Ensure that all points are in nodes that have at least one
-            # neighbor, i.e. are not obstacles.
-            assert all(
-                any(True for _ in nx.neighbors(graph, point_label))
-                for point_label in point_labels
-            ), "Point labels must not encode obstacles!"
-            # Ensure that all agents spawn in nodes that have at least one
-            # neighbor, i.e. are not obstacles.
-            assert all(
-                any(True for _ in nx.neighbors(graph, agent_label))
-                for agent_label in init_agent_labels
-            ), "Agent labels must not encode obstacles!"
+        # Check that all agent and point labels are nodes in the graph.
+        assert all(
+            label in graph.nodes for label in init_agent_labels
+        ), "Agent labels must be nodes in the graph!"
+        assert all(
+            label in graph.nodes for label in point_labels
+        ), "Point labels must be nodes in the graph!"
+        # Disallow agents to spawn inside obstacles as they would
+        # not be able to move, i.e., agent labels must have neighbors.
+        assert all(
+            any(True for _ in nx.neighbors(graph, agent_label))
+            for agent_label in init_agent_labels
+        ), "Agent labels must not encode obstacles!"
+        # Allow but issue warning for points inside obstacles as they just
+        # cannot be collected.
+        if any(
+            not any(True for _ in nx.neighbors(graph, point_label))
+            for point_label in point_labels
+        ):
+            gymnasium.logger.warn(
+                "Some points are inside obstacles and cannot be collected!"
+            )
+        # Warn if points are overlapping.
+        if len(point_labels) != len(set(point_labels)):
+            gymnasium.logger.warn("Some points overlap and will be merged!")
 
         gymnasium.logger.info(" - Seeding environment...")
         self.seed()
 
         self.graph = graph
         self.adjacency_matrix = nx.to_numpy_array(self.graph)
-        self.point_labels = point_labels
+        self._point_labels = point_labels
         self.init_agent_labels = init_agent_labels
         self.render_mode = render_mode
         self.cheating_cost = cheating_cost
@@ -181,7 +194,7 @@ class raw_env(AECEnv):
         gymnasium.logger.info(" - Setting up observation spaces...")
         self.observation_spaces = self._get_observation_spaces(
             len(self.graph.nodes),
-            len(self.point_labels),
+            len(self._point_labels),
             self.agents,
             self.reveal_cheating_cost,
             self.reveal_collection_reward,
@@ -191,7 +204,7 @@ class raw_env(AECEnv):
         gymnasium.logger.info(" - Setting up state space...")
         self.state_space = self._get_state_space(
             len(self.graph.nodes),
-            len(self.point_labels),
+            len(self._point_labels),
             len(self.agents),
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
@@ -481,6 +494,9 @@ class raw_env(AECEnv):
     def _create_points(self, point_labels):
         """Creates points from given node labels.
 
+        Note that this merges all points at the same node into a single
+        point.
+
         Args:
             point_labels (list[int]): Point positions.
 
@@ -662,7 +678,7 @@ class raw_env(AECEnv):
         self.collectors = self._create_collectors(
             self.init_agent_labels, self.agents
         )
-        self.points = self._create_points(self.point_labels)
+        self.points = self._create_points(self._point_labels)
 
         self.iteration = 0
         self.has_reset = True
@@ -794,17 +810,17 @@ class raw_env(AECEnv):
         # Add white background.
         self.surf.fill((255, 255, 255))
 
-        self._render_points(
-            surf=self.surf,
-            points=self.points,
-            point_size=POINT_SIZE,
-        )
         self._render_obstacles(
             surf=self.surf,
             nodes=self.graph.nodes,
             nodes_per_row=self.nodes_per_row,
             node_width=self.node_width,
             node_height=self.node_height,
+        )
+        self._render_points(
+            surf=self.surf,
+            points=self.points,
+            point_size=POINT_SIZE,
         )
         self._render_paths(
             surf=self.surf,
