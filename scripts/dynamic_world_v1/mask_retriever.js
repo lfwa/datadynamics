@@ -5,13 +5,14 @@
     * https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_DYNAMICWORLD_V1
 */
 
+// Not all dates are available!
 var startDate = '2021-04-02';
 var endDate = '2021-04-03';
-//var geometry = ee.Geometry.Point(20.6729, 52.4305);
-var geometry = ee.Geometry.BBox(20.660, 52.420, 20.690, 52.450)
+var geometry = ee.Geometry.BBox(121.20696258544922, 13.626879692077637, 121.212646484375, 13.63064956665039);
 // Chosen label to extract mask from.
 var chosenLabel = 'water';
 // Resolution in meters per pixel of the exported image.
+// Dynamic World v1 has a resolution of 10 meters per pixel.
 var scale = 5;
 
 // Construct a collection of corresponding Dynamic World and Sentinel-2 for
@@ -44,16 +45,16 @@ var image_mask = dwImage
 
 // Display the Dynamic World visualization with the source Sentinel-2 image.
 Map.addLayer(
-    s2Image,
+    s2Image.clip(geometry),
     { min: 0, max: 3000, bands: ['B4', 'B3', 'B2'] },
     'Sentinel-2 L1C');
 Map.addLayer(
     image_mask.clip(geometry));
-Map.centerObject(geometry, 12)
+Map.centerObject(geometry);
 
 Export.image.toDrive({
     image: image_mask,
-    description: 'image_mask_low_scale',
+    description: 'obstacle_mask_5mpp',
     region: geometry,
     scale: scale
 })

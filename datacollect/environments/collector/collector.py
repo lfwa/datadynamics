@@ -38,7 +38,11 @@ class raw_env(AECEnv):
 
     This environment is based on a 2D plane. Points are given by their (x, y)
     coordinates and each agent defines a `collector` that can move around the
-    plane and collect points.
+    plane to collect points for a reward. Collectors may only move between
+    points and they always collect the point that they move to.
+    The cost of moving is defined as the Euclidean distance traveled.
+    Agents may also cheat and collect an already collected point. Cheating as
+    well as rewards are defined by a user-given function.
 
     Attributes:
         See AECEnv.
@@ -463,11 +467,9 @@ class raw_env(AECEnv):
     def reward(self, collector, point):
         """Returns reward for collecting a given point.
 
-        If point has already been collected, we add a penalty for cheating.
-        The reward/cost is based on the Euclidean distance.
-
-        Note:
-            We use a cost-based model, so the reward is the negated cost.
+        Collecting a point triggers a reward, but if the point has already
+        been collected, we add a penalty for cheating. The cost of moving
+        is the Euclidean distance.
 
         Args:
             collector (Collector): Collector that collected the point.
@@ -476,11 +478,11 @@ class raw_env(AECEnv):
         Returns:
             float: Reward.
         """
-        cost = np.linalg.norm(collector.position - point.position)
-        cost -= self.collection_reward(point)
+        reward = -np.linalg.norm(collector.position - point.position)
+        reward += self.collection_reward(point)
         if point.is_collected():
-            cost += self.cheating_cost(point)
-        return -cost
+            reward -= self.cheating_cost(point)
+        return reward
 
     def _state(
         self,

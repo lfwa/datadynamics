@@ -39,7 +39,9 @@ class DummyPolicy(BasePolicy):
         actions = {}
         for agent in env.possible_agents:
             action_space = env.action_spaces[agent]
-            actions[agent] = cycle(range(action_space.n))
+            actions[agent] = cycle(
+                range(action_space.start, action_space.n + action_space.start)
+            )
         return actions
 
     def action(self, observation, agent):

@@ -37,8 +37,12 @@ class raw_env(AECEnv):
     This environment is based on a weighted (possible directed) graph using
     networkx. The graph represents the environment structure and may define
     obstacles by creating nodes with e.g. no connecting edges as well as
-    define collectable points. Each agent in the environment defines a
-    collector that can move around the graph and collect the defined points.
+    define collectable points. The weight of each edge defines the cost of
+    traversing that edge.
+    Agents can move around the graph by traversing edges and collect defined
+    points for a reward. Agents can also cheat by collecting points that have
+    already been collected. Cheating as well as rewards are
+    defined by a user-given function.
 
     Attributes:
         See AECEnv.
@@ -145,7 +149,8 @@ class raw_env(AECEnv):
 
         self.graph = graph
         self.adjacency_matrix = nx.to_numpy_array(self.graph)
-        self._point_labels = point_labels
+        # Remove duplicate points.
+        self._point_labels = list(dict.fromkeys(point_labels))
         self.init_agent_labels = init_agent_labels
         self.render_mode = render_mode
         self.cheating_cost = cheating_cost
@@ -255,7 +260,9 @@ class raw_env(AECEnv):
     def _get_action_spaces(self, agents, nodes):
         """Retrieves action spaces for all agents.
 
-        Each action is a neighbouring node to move to (by node label).
+        Each action is a neighbouring node to move to (by node label) or
+        to collect the current point (if the node is defined as one) by
+        issuing the `collect` action, -1.
 
         Args:
             agents (list[str]): List of agent names.
@@ -265,7 +272,8 @@ class raw_env(AECEnv):
             dict: Dictionary of discrete action spaces.
         """
         action_spaces = {
-            agent: gymnasium.spaces.Discrete(len(nodes)) for agent in agents
+            agent: gymnasium.spaces.Discrete(n=len(nodes) + 1, start=-1)
+            for agent in agents
         }
 
         def sample(mask=None):
@@ -291,15 +299,16 @@ class raw_env(AECEnv):
                 "created yet. Did you call reset() before sampling?"
             )
 
-            collector_node = self.collectors[agent].label
-            possible_actions = list(nx.neighbors(self.graph, collector_node))
+            action_mask, collect_action_validity = self._get_action_mask(agent)
+            possible_actions = action_mask.nonzero()[0]
+            if collect_action_validity:
+                possible_actions = np.append(possible_actions, -1)
 
-            if not possible_actions:
-                return None
-
-            random_action = self.rng.choice(possible_actions)
-
-            return random_action
+            return (
+                self.rng.choice(possible_actions)
+                if not possible_actions.size == 0
+                else None
+            )
 
         # Replace standard sample method s.t. we check for path validity.
         for action_space in action_spaces.values():
@@ -321,8 +330,9 @@ class raw_env(AECEnv):
 
         Each observation consist of the adjacency matrix of the underlying
         graph, list of the point and agent positions as node labels,
-        collected points, an image representing the graph, and an action
-        mask representing valid actions for the current agent.
+        collected points, an image representing the graph, an action
+        mask representing valid actions for the current agent, and whether
+        the agent can issue the `collect` (-1) action.
 
         Args:
             n_nodes (int): Number of nodes in the graph.
@@ -367,6 +377,9 @@ class raw_env(AECEnv):
             "action_mask": gymnasium.spaces.Box(
                 low=0, high=1, shape=(n_nodes,), dtype=int
             ),
+            # Whether it is possible for the current agent to issue
+            # the `collect` (-1) action.
+            "collect_action_validity": gymnasium.spaces.Discrete(n=2, start=0),
         }
 
         if reveal_cheating_cost:
@@ -535,42 +548,46 @@ class raw_env(AECEnv):
             np.array(pygame.surfarray.pixels3d(scaled_surf)), axes=(1, 0, 2)
         )
 
-    def reward(self, cur_node, new_node):
-        """Returns reward for moving from current node to new node.
+    def reward(self, cur_node, action):
+        """Returns reward for executing action in cur_node.
 
-        If the new node is a point that has already been collected, we add a
+        If the action is `collect` (-1), we add a reward for collecting the
+        point. However, if the point has already been collected, we add a
         penalty for cheating.
-        The cost of moving is the weight of the edge between the current and
-        new node.
-
-        Note:
-            We use a cost-based model, so the reward is the negated cost.
+        If the action is a label of a new node, the reward is the cost of
+        traversing the edge between the current and new node represented by
+        the weight of the edge.
 
         Args:
             cur_node (int): Node label of current node.
-            new_node (int): Node label of new node.
+            action (int): Action to execute, which is either a node label or
+                `collect` (-1).
 
         Raises:
-            ValueError: No edge exists between current and new node.
+            ValueError: No edge exists between current and new node of action
+                or if the action is `collect` (-1) and cur_node is not a point.
 
         Returns:
             float: Reward
         """
-        try:
-            cost = self.graph.adj[cur_node][new_node]["weight"]
-        except KeyError:
-            raise ValueError(
-                f"There is no edge between node {cur_node} and {new_node}. "
-                "Reward cannot be calculated."
+        if action == -1:
+            assert cur_node in self.points, (
+                f"Node {cur_node} is not a point. Action cannot be `collect` "
+                "(-1)."
             )
-        if new_node in self.points:
-            # Subtract reward for collecting a point.
-            cost -= self.collection_reward(new_node)
-            # Add cost for cheating if point has already been collected.
-            if self.points[new_node].is_collected():
-                cost += self.cheating_cost(new_node)
-        # Return negated cost as reward since we are using a cost-based model.
-        return -cost
+            # Add reward for collecting a point, and add penalty if cheating.
+            reward = self.collection_reward(cur_node)
+            if self.points[cur_node].is_collected():
+                reward -= self.cheating_cost(cur_node)
+        else:
+            try:
+                reward = -self.graph.adj[cur_node][action]["weight"]
+            except KeyError:
+                raise ValueError(
+                    f"There is no weighted edge between node {cur_node} and "
+                    f"{action}. Reward cannot be calculated."
+                )
+        return reward
 
     def _state(
         self,
@@ -626,25 +643,28 @@ class raw_env(AECEnv):
         return state
 
     def _get_action_mask(self, agent):
-        """Retrieves action mask for a given agent.
+        """Retrieves action mask and whether `collect` (-1) can be issued.
 
         The action mask is an array representing the validity of each action.
         An action is valid if the agent can move to the corresponding node.
         Valid actions are represented by `1`, and invalid actions are
         represented by `0`.
+        The `collect` (-1) action is valid if the agent is at a point.
 
         Args:
             agent (str): Agent name.
 
         Returns:
-            np.ndarray: Action mask.
+            tuple(np.ndarray, bool): Tuple action mask and validity of the
+                `collect` (-1) action.
         """
         action_mask = np.zeros(len(self.graph.nodes), dtype=int)
         cur_node = self.collectors[agent].label
         neighbors = nx.neighbors(self.graph, cur_node)
         for neighbor in neighbors:
             action_mask[neighbor] = 1
-        return action_mask
+        collect_action_validity = int(cur_node in self.points)
+        return action_mask, collect_action_validity
 
     def observe(self, agent):
         # FIXME: Warning for api_test /Users/lfwa/Library/Caches/pypoetry/
@@ -659,7 +679,10 @@ class raw_env(AECEnv):
             self.reveal_cheating_cost,
             self.reveal_collection_reward,
         )
-        obs["action_mask"] = self._get_action_mask(agent)
+        (
+            obs["action_mask"],
+            obs["collect_action_validity"],
+        ) = self._get_action_mask(agent)
         return obs
 
     def state(self):
@@ -723,26 +746,31 @@ class raw_env(AECEnv):
                 f"agent {agent}."
             )
 
+        action_mask, collect_action_validity = self._get_action_mask(agent)
         collector = self.collectors[agent]
         cur_node = collector.label
-        neighbors = list(nx.neighbors(self.graph, cur_node))
 
-        if action in neighbors and action is not None:
+        if (
+            action is not None
+            and action_mask[action]
+            or (action == -1 and collect_action_validity)
+        ):
             reward = self.reward(cur_node, action)
-            # Move agent to new node.
-            collector.move(
-                position=self._get_node_position(
-                    node_label=action,
-                    nodes_per_row=self.nodes_per_row,
-                    node_width=self.node_width,
-                    node_height=self.node_height,
-                ),
-                label=action,
-            )
 
-            # Check if agent has collected a point.
-            if action in self.points:
-                collector.collect(self.points[action])
+            if action == -1:
+                # Collect point.
+                collector.collect(self.points[cur_node])
+            else:
+                # Move agent to the new node label.
+                collector.move(
+                    position=self._get_node_position(
+                        node_label=action,
+                        nodes_per_row=self.nodes_per_row,
+                        node_width=self.node_width,
+                        node_height=self.node_height,
+                    ),
+                    label=action,
+                )
         else:
             reward = 0
 

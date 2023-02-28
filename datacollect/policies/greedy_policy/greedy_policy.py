@@ -19,18 +19,18 @@ def policy(**kwargs):
 
 
 class GreedyPolicy(BasePolicy):
-    """Locally optimal policy using a greedy approach.
+    """Greedy policy for collector environment.
 
-    This policy computes the reward for every action in every step and chooses
-    the action with the highest reward.
+    This policy computes the expected reward for every action in every step
+    and chooses the one with the highest expected reward.
     Compatible only with collector environment.
 
     Note:
         This is only locally optimal and not globally. Best routes to collect
         all points are disregarded and we only search for the next best point
         for every step.
-        Also if the cost of cheating is small then the policy will degenerate
-        and always resample the same point.
+        The policy may degenerate and always sample the same point if the cost
+        of cheating is lower than the reward for collecting a point.
 
     Attributes:
         env (pettingzoo.utils.env.AECEnv): Environment used by policy.
@@ -43,16 +43,32 @@ class GreedyPolicy(BasePolicy):
         if self.env.terminations[agent] or self.env.truncations[agent]:
             # Agent is dead, the only valid action is None.
             return None
+
+        agent_idx = int(agent[-1])
+        cur_position = observation["collector_positions"][agent_idx]
+
         best_reward = -np.inf
         best_action = None
-        for action, point in enumerate(self.env.points):
-            reward = self.env.reward(
-                self.env.collectors[agent],
-                point,
-            )
+
+        for i, position in enumerate(observation["point_positions"]):
+            cheating = observation["collected"][i] > 0
+            reward = -np.linalg.norm(cur_position - position)
+
+            if "collection_reward" in observation:
+                reward += observation["collection_reward"][i]
+            if "cheating_cost" in observation and cheating:
+                reward -= observation["cheating_cost"][i]
+
             if reward > best_reward:
                 best_reward = reward
-                best_action = action
+                best_action = i
+
+        if best_action is None:
+            gymnasium.logger.warn(
+                f"{agent} cannot reach any points and will issue None "
+                "actions."
+            )
+
         return best_action
 
 
@@ -68,8 +84,10 @@ class GraphGreedyPolicy(BasePolicy):
 
     Attributes:
         env (pettingzoo.utils.env.AECEnv): Environment used by policy.
-        shortest_paths (dict): Cached shortest paths for all node pairs.
-        cur_goals (dict): Cached goals for each agent.
+        shortest_len_paths (dict): Cached shortest paths including path
+            lengths for all node pairs.
+        cur_goals (dict): Cached goals for each agent consisting of
+            (path,cheating, point_idx) tuples keyed by agent name.
     """
 
     def __init__(self, env):
@@ -84,11 +102,15 @@ class GraphGreedyPolicy(BasePolicy):
                 " - Computing and caching shortest paths. This runs in O(V^3) "
                 "and may take a while..."
             )
-            self.shortest_paths = dict(
-                nx.all_pairs_dijkstra_path(self.env.graph)
+            self.shortest_len_paths = dict(
+                nx.all_pairs_dijkstra(self.env.graph)
             )
-        # cur_goals consist of (path, point_in_path_collected) keyed by agent.
-        self.cur_goals = {}
+            # Shortest len paths is a dict with node labels as keys and values
+            # consisting of a (length dict, path dict) tuple containing
+            # shortest paths between all pairs of nodes.
+            self.point_labels = set()
+            # cur_goals consist of (path, cheating, point_idx) keyed by agent.
+            self.cur_goals = {}
         gymnasium.logger.info("Completed initialization.")
 
     def action(self, observation, agent):
@@ -96,65 +118,63 @@ class GraphGreedyPolicy(BasePolicy):
             # Agent is dead, the only valid action is None.
             return None
 
-        cur_node = self.env.collectors[agent].label
-        goal_path, points_in_goal_path_collected = self.cur_goals.get(
-            agent, ([], {})
+        if not self.env.static_graph:
+            self.shortest_len_paths = dict(
+                nx.all_pairs_dijkstra(self.env.graph)
+            )
+            self.cur_goals = {}
+            self.point_labels = set()
+
+        if not self.point_labels:
+            # For static graphs, the points should not change or change
+            # position as such we only need to compute labels once.
+            self.point_labels = set(observation["point_labels"])
+
+        agent_idx = int(agent[-1])
+        cur_node = observation["collector_labels"][agent_idx]
+        goal_path, goal_cheating, goal_point_idx = self.cur_goals.get(
+            agent, ([], None, None)
         )
 
-        # Update shortest paths and reset goals if graph is not static.
-        if not self.env.static_graph:
-            self.shortest_paths = dict(
-                nx.all_pairs_dijkstra_path(self.env.graph)
-            )
-            goal_path = []
-            points_in_goal_path_collected = {}
-
-        # Use cached goal if it exists and the point has not been collected
-        #  since last time. Otherwise, find new goal.
-        if not goal_path or any(
-            [
-                collected != self.env.points[p].is_collected()
-                for p, collected in points_in_goal_path_collected.items()
-            ]
+        # Update goal if we completed the goal (goal_path is empty) or if
+        # the goal was collected by another agent meanwhile.
+        if not goal_path or goal_cheating != (
+            observation["collected"][goal_point_idx] > 0
         ):
             best_reward = -np.inf
-            goal_path = []
-            points_in_goal_path_collected = {}
 
-            for node_label, point in self.env.points.items():
-                path = self.shortest_paths.get(cur_node, {}).get(
-                    node_label, []
+            for i, point_label in enumerate(observation["point_labels"]):
+                path = self.shortest_len_paths.get(cur_node, ({}, {}))[1].get(
+                    point_label, []
                 )
-                points_in_path_collected = {}
-                # Ensure path exists.
-                if len(path) == 0:
+
+                if not path:
                     continue
-                elif len(path) == 1:
-                    # Ensure there is a self-loop.
-                    if not nx.is_path(self.env.graph, [cur_node, path[0]]):
-                        continue
-                    reward = self.env.reward(cur_node, path[0])
-                    # Add to points in path
-                    points_in_path_collected[path[0]] = point.is_collected()
-                else:
-                    reward = 0
-                    for i in range(len(path) - 1):
-                        reward += self.env.reward(path[i], path[i + 1])
-                        if path[i + 1] in self.env.points:
-                            points_in_path_collected[
-                                path[i + 1]
-                            ] = self.env.points[path[i + 1]].is_collected()
-                    # Trim first node as it is the current node.
-                    path = path[1:]
+
+                cheating = observation["collected"][i] > 0
+                reward = -self.shortest_len_paths.get(cur_node, ({}, {}))[
+                    0
+                ].get(point_label, np.inf)
+                if "collection_reward" in observation:
+                    reward += observation["collection_reward"][i]
+                if "cheating_cost" in observation and cheating:
+                    reward -= observation["cheating_cost"][i]
+
                 if reward > best_reward:
                     best_reward = reward
-                    goal_path = path[:]
-                    points_in_goal_path_collected = points_in_path_collected
-            if not goal_path:
-                gymnasium.logger.warn(
-                    f"{agent} cannot reach any points and will issue None "
-                    "actions."
-                )
-            self.cur_goals[agent] = (goal_path, points_in_goal_path_collected)
+                    # Trim current node and add a `collect` action.
+                    goal_path = path[1:] + [-1]
+                    goal_cheating = cheating
+                    goal_point_idx = i
 
-        return goal_path.pop(0) if goal_path else None
+            self.cur_goals[agent] = (goal_path, goal_cheating, goal_point_idx)
+
+        action = goal_path.pop(0) if goal_path else None
+
+        if action is None:
+            gymnasium.logger.warn(
+                f"{agent} cannot reach any points and will issue None "
+                "actions."
+            )
+
+        return action
