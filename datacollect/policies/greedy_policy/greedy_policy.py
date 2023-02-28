@@ -95,7 +95,7 @@ class GraphGreedyPolicy(BasePolicy):
             env.metadata["name"] == "graph_collector"
         ), "GraphGreedyPolicy is only compatible with graph_collector."
 
-        gymnasium.logger.info("Initializing GraphOptimalPolicy...")
+        gymnasium.logger.info("Initializing GraphGreedyPolicy...")
         self.env = env
         if self.env.static_graph:
             gymnasium.logger.info(
