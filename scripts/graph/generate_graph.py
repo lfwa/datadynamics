@@ -28,6 +28,7 @@ def main(args):
         args.input_file,
         resize=args.resize,
         default_weight=args.default_weight,
+        default_self_loop_weight=args.default_self_loop_weight,
         inverted=args.inverted,
         flip=args.flip,
     )
@@ -85,6 +86,13 @@ if __name__ == "__main__":
         type=float,
         help="Default weight of added edges",
         default=1.0,
+    )
+    parser.add_argument(
+        "-dfslw",
+        "--default_self_loop_weight",
+        type=float,
+        help="Default weight of added self loops",
+        default=0.0,
     )
     parser.add_argument(
         "-flip",

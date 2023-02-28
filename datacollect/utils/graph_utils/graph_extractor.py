@@ -23,7 +23,12 @@ def _get_neighbors(i, j, m, n):
 
 
 def from_mask_file(
-    filename, resize=None, default_weight=1.0, inverted=False, flip=False
+    filename,
+    resize=None,
+    default_weight=1.0,
+    default_self_loop_weight=0.0,
+    inverted=False,
+    flip=False,
 ):
     """Generate graph from an image file representing obstacle mask.
 
@@ -34,6 +39,8 @@ def from_mask_file(
             Defaults to None (no resizing).
         default_weight (float, optional): Default weight of added edges.
             Defaults to 1.0.
+        default_self_loop_weight (float, optional): Default weight of added
+            self loops. Defaults to 0.0.
         inverted (bool, optional): Invert obstacle representations. By default
             (False), 0/False are used to represent obstacles, i.e., nodes with
             no incoming or outgoing edges. If enabled (True), 1/True are used
@@ -53,7 +60,10 @@ def from_mask_file(
     if flip:
         image_array = np.flip(image_array, axis=0)
     graph, metadata = from_image_array(
-        image_array, default_weight=default_weight, inverted=inverted
+        image_array,
+        default_weight=default_weight,
+        default_self_loop_weight=default_self_loop_weight,
+        inverted=inverted,
     )
     metadata["obstacle_mask_file"] = filename
     metadata["resize"] = resize
@@ -61,13 +71,20 @@ def from_mask_file(
     return graph, metadata
 
 
-def from_image_array(image_array, default_weight=1.0, inverted=False):
+def from_image_array(
+    image_array,
+    default_weight=1.0,
+    default_self_loop_weight=0.0,
+    inverted=False,
+):
     """Generate graph from a binary image array.
 
     Args:
         image_array (np.ndarray): Binary image array to generate graph from.
         default_weight (float, optional): Default weight of added edges.
             Defaults to 1.0.
+        default_self_loop_weight (float, optional): Default weight of added
+            self loops. Defaults to 0.0.
         inverted (bool, optional): Invert obstacle representations. By default
             (False), 0/False are used to represent obstacles, i.e., nodes with
             no incoming or outgoing edges. If enabled (True), 1/True are used
@@ -95,7 +112,7 @@ def from_image_array(image_array, default_weight=1.0, inverted=False):
                 if not obstacle:
                     free_node_labels.append(node_label)
                     graph.add_edge(
-                        node_label, node_label, weight=default_weight
+                        node_label, node_label, weight=default_self_loop_weight
                     )
 
                     # Add edges to neighbors for non-obstacles.
@@ -117,6 +134,7 @@ def from_image_array(image_array, default_weight=1.0, inverted=False):
                 pbar.update(1)
     metadata = {
         "default_weight": default_weight,
+        "default_self_loop_weight": default_self_loop_weight,
         "inverted": inverted,
         "nodes_per_row": image_array.shape[1],
         "nodes_per_col": image_array.shape[0],
