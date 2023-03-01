@@ -98,10 +98,11 @@ class raw_env(AECEnv):
                 True.
             static_graph (bool, optional): Whether the underlying graph is
                 static and never changes. Significantly impacts performance
-                as underlying adjacency matrix have to be recomputed in
-                every step. May also influence performance of policies as e.g.
-                shortest paths will need to be recomputed for every action to
-                determine optimal agent movement. Defaults to True.
+                since everything in the environment have to be re-rendered
+                for every frame to ensure consistency. May also influence the
+                performance of policies as e.g. shortest paths will need to be
+                recomputed for every action to determine optimal agent
+                movement. Defaults to True.
             dynamic_display (bool, optional): Whether to dynamically adjust
                 the display size to the graph size. Defaults to False.
             render_mode (str, optional): Render mode. Supported modes are
@@ -233,6 +234,7 @@ class raw_env(AECEnv):
         self.screen = None
         self.clock = None
         self.surf = None
+        self.cached_obstacle_surf = None
         self.isopen = False
 
         gymnasium.logger.info("Environment initialized.")
@@ -928,21 +930,31 @@ class raw_env(AECEnv):
             node_width (int): Display width of a node.
             node_height (int): Display height of a node.
         """
-        for node in nodes:
-            if any(True for _ in self.graph.neighbors(node)):
-                continue
-            x, y = self._get_node_position(
-                node_label=node,
-                nodes_per_row=nodes_per_row,
-                node_width=node_width,
-                node_height=node_height,
+        # For static graphs we only have to render obstacles once.
+        if self.cached_obstacle_surf is None or not self.static_graph:
+            cached_obstacle_surf = pygame.Surface(
+                (SCREEN_WIDTH, SCREEN_HEIGHT)
             )
-            rect = pygame.Rect(x, y, node_width, node_height)
-            pygame.draw.rect(
-                surf,
-                color=(0, 0, 0),
-                rect=rect,
-            )
+            # Add white background.
+            cached_obstacle_surf.fill((255, 255, 255))
+            for node in nodes:
+                if any(True for _ in self.graph.neighbors(node)):
+                    continue
+                x, y = self._get_node_position(
+                    node_label=node,
+                    nodes_per_row=nodes_per_row,
+                    node_width=node_width,
+                    node_height=node_height,
+                )
+                rect = pygame.Rect(x, y, node_width, node_height)
+                pygame.draw.rect(
+                    cached_obstacle_surf,
+                    color=(0, 0, 0),
+                    rect=rect,
+                )
+            self.cached_obstacle_surf = cached_obstacle_surf
+
+        surf.blit(self.cached_obstacle_surf, (0, 0))
 
     def _render_points(self, surf, points, point_size):
         """Renders all points as circles.
