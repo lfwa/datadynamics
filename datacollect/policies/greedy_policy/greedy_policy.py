@@ -115,7 +115,7 @@ class GraphGreedyPolicy(BasePolicy):
             # consisting of a (length dict, path dict) tuple containing
             # shortest paths between all pairs of nodes.
             self.point_labels = set()
-            # cur_goals consist of (path, cheating, point_idx) keyed by agent.
+            # cur_goals consist of (path, collected, point_idx) keyed by agent.
             self.cur_goals = {}
         gymnasium.logger.info("Completed initialization.")
 
@@ -141,14 +141,15 @@ class GraphGreedyPolicy(BasePolicy):
 
         agent_idx = int(agent[-1])
         cur_node = observation["collector_labels"][agent_idx]
-        goal_path, goal_cheating, goal_point_idx = self.cur_goals.get(
+        goal_path, goal_collected, goal_point_idx = self.cur_goals.get(
             agent, ([], None, None)
         )
 
         # Update goal if we completed the goal (goal_path is empty) or if
         # the goal was collected by another agent meanwhile.
-        if not goal_path or goal_cheating != (
-            observation["collected"][goal_point_idx] > 0
+        if (
+            not goal_path
+            or goal_collected != observation["collected"][goal_point_idx]
         ):
             best_reward = -np.inf
 
@@ -160,23 +161,23 @@ class GraphGreedyPolicy(BasePolicy):
                 if not path:
                     continue
 
-                cheating = observation["collected"][i] > 0
+                collected = observation["collected"][i]
                 reward = -self.shortest_len_paths.get(cur_node, ({}, {}))[
                     0
                 ].get(point_label, np.inf)
                 if "collection_reward" in observation:
                     reward += observation["collection_reward"][i]
-                if "cheating_cost" in observation and cheating:
+                if "cheating_cost" in observation and collected > 0:
                     reward -= observation["cheating_cost"][i]
 
                 if reward > best_reward:
                     best_reward = reward
                     # Trim current node and add a `collect` action.
                     goal_path = path[1:] + [-1]
-                    goal_cheating = cheating
+                    goal_collected = collected
                     goal_point_idx = i
 
-            self.cur_goals[agent] = (goal_path, goal_cheating, goal_point_idx)
+            self.cur_goals[agent] = (goal_path, goal_collected, goal_point_idx)
 
         action = goal_path.pop(0) if goal_path else None
 
