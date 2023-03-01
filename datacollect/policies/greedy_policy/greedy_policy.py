@@ -119,6 +119,9 @@ class GraphGreedyPolicy(BasePolicy):
             return None
 
         if not self.env.static_graph:
+            gymnasium.logger.info(
+                "Recomputing shortest paths in O(V^3) for non-static graph..."
+            )
             self.shortest_len_paths = dict(
                 nx.all_pairs_dijkstra(self.env.graph)
             )
