@@ -23,6 +23,7 @@ class GreedyPolicy(BasePolicy):
 
     This policy computes the expected reward for every action in every step
     and chooses the one with the highest expected reward.
+
     Compatible only with collector environment.
 
     Note:
@@ -37,6 +38,10 @@ class GreedyPolicy(BasePolicy):
     """
 
     def __init__(self, env):
+        assert env.metadata["name"] == "collector", (
+            f"{self.__class__.__name__} is only compatible with " "collector."
+        )
+
         self.env = env
 
     def action(self, observation, agent):
@@ -91,9 +96,10 @@ class GraphGreedyPolicy(BasePolicy):
     """
 
     def __init__(self, env):
-        assert (
-            env.metadata["name"] == "graph_collector"
-        ), "GraphGreedyPolicy is only compatible with graph_collector."
+        assert env.metadata["name"] == "graph_collector", (
+            f"{self.__class__.__name__} is only compatible with "
+            "graph_collector."
+        )
 
         gymnasium.logger.info("Initializing GraphGreedyPolicy...")
         self.env = env
