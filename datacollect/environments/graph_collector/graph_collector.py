@@ -2,7 +2,6 @@ import math
 from itertools import groupby
 
 import gymnasium
-import networkx as nx
 import numpy as np
 import pygame
 from pettingzoo.utils import agent_selector
@@ -128,13 +127,13 @@ class raw_env(AECEnv):
         # Disallow agents to spawn inside obstacles as they would
         # not be able to move, i.e., agent labels must have neighbors.
         assert all(
-            any(True for _ in nx.neighbors(graph, agent_label))
+            any(True for _ in graph.neighbors(agent_label))
             for agent_label in init_agent_labels
         ), "Agent labels must not encode obstacles!"
         # Allow but issue warning for points inside obstacles as they just
         # cannot be collected.
         if any(
-            not any(True for _ in nx.neighbors(graph, point_label))
+            not any(True for _ in graph.neighbors(point_label))
             for point_label in point_labels
         ):
             gymnasium.logger.warn(
@@ -148,7 +147,6 @@ class raw_env(AECEnv):
         self.seed()
 
         self.graph = graph
-        self.adjacency_matrix = nx.to_numpy_array(self.graph)
         # Remove duplicate points.
         self._point_labels = list(dict.fromkeys(point_labels))
         self.init_agent_labels = init_agent_labels
@@ -328,11 +326,10 @@ class raw_env(AECEnv):
     ):
         """Retrieves observation spaces for all agents.
 
-        Each observation consist of the adjacency matrix of the underlying
-        graph, list of the point and agent positions as node labels,
-        collected points, an image representing the graph, an action
-        mask representing valid actions for the current agent, and whether
-        the agent can issue the `collect` (-1) action.
+        Each observation consist of a list of the point and agent positions as
+        node labels, collected points, an image representing the environment,
+        an action mask representing valid actions for the current agent, and
+        whether the agent can issue the `collect` (-1) action.
 
         Args:
             n_nodes (int): Number of nodes in the graph.
@@ -348,13 +345,6 @@ class raw_env(AECEnv):
             dict: Dictionary of observation spaces keyed by agent name.
         """
         spaces = {
-            # Adjacency matrix representing the underlying graph.
-            "graph": gymnasium.spaces.Box(
-                low=0,
-                high=np.inf,
-                shape=(n_nodes, n_nodes),
-                dtype=np.float64,
-            ),
             # List of node labels, where points/collectors are located.
             "point_labels": gymnasium.spaces.Box(
                 low=0, high=n_nodes, shape=(n_points,), dtype=int
@@ -402,9 +392,9 @@ class raw_env(AECEnv):
     ):
         """Retrieves state space.
 
-        The global state consists of the adjacency matrix of the underlying
-        graph, list of the point and agent positions as node labels,
-        collected points, and an image representing the graph.
+        The global state consists of a list of the point and agent positions
+        as node labels, collected points, and an image representing the
+        environment.
 
         Args:
             n_nodes (int): Number of nodes in the graph.
@@ -418,13 +408,6 @@ class raw_env(AECEnv):
         """
         state_space = gymnasium.spaces.Dict(
             {
-                # Adjacency matrix representing the underlying graph.
-                "graph": gymnasium.spaces.Box(
-                    low=0,
-                    high=np.inf,
-                    shape=(n_nodes, n_nodes),
-                    dtype=np.float64,
-                ),
                 # List of node labels, where points/collectors are located.
                 "point_labels": gymnasium.spaces.Box(
                     low=0, high=n_nodes, shape=(n_points,), dtype=int
@@ -611,9 +594,6 @@ class raw_env(AECEnv):
             dict: Current global state.
         """
         state = {
-            "graph": self.adjacency_matrix
-            if self.static_graph
-            else nx.to_numpy_array(graph),
             "point_labels": np.array(
                 [point.label for point in points.values()], dtype=int
             ),
@@ -660,7 +640,7 @@ class raw_env(AECEnv):
         """
         action_mask = np.zeros(len(self.graph.nodes), dtype=int)
         cur_node = self.collectors[agent].label
-        neighbors = nx.neighbors(self.graph, cur_node)
+        neighbors = self.graph.neighbors(cur_node)
         for neighbor in neighbors:
             action_mask[neighbor] = 1
         collect_action_validity = int(cur_node in self.points)
@@ -949,7 +929,7 @@ class raw_env(AECEnv):
             node_height (int): Display height of a node.
         """
         for node in nodes:
-            if any(True for _ in nx.neighbors(self.graph, node)):
+            if any(True for _ in self.graph.neighbors(node)):
                 continue
             x, y = self._get_node_position(
                 node_label=node,
