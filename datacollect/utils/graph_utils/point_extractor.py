@@ -1,6 +1,5 @@
 import math
 
-import networkx as nx
 import numpy as np
 from PIL import Image
 

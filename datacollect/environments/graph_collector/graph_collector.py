@@ -13,7 +13,7 @@ FPS = 120
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
 # Rendering sizes.
-POINT_SIZE = 10
+POINT_SIZE = 7
 PATH_SIZE = 2
 COLLECTOR_SIZE = 4
 COLLECTOR_LEN = 15
@@ -807,10 +807,10 @@ class raw_env(AECEnv):
                     (SCREEN_WIDTH, SCREEN_HEIGHT)
                 )
             except Exception as e:
-                gymnasium.logger.error(
-                    f"Could not initialize pygame display: {e}. If "
-                    "`dynamic_display` is enabled, try disabling it."
-                )
+                error_msg = f"Could not initialize pygame display: {e}."
+                if self.dynamic_display:
+                    error_msg += " Try disabling `dynamic_display`."
+                gymnasium.logger.error(error_msg)
                 raise e
         if self.clock is None:
             self.clock = pygame.time.Clock()
