@@ -72,8 +72,6 @@ def from_coordinates(coordinates, width, height, flip_y=True):
     Returns:
         list: List of point labels.
     """
-    # TODO: Pass in obstacle labels to exclude points in obstacles.
-    # Then move points to nearest non-obstacle point.
     # Latitude, longitude are reversed from x, y coordinates!
     coordinates = np.array(coordinates)
     coordinates = np.flip(coordinates, axis=1)

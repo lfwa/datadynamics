@@ -7,8 +7,7 @@ from datacollect.policies.base_policy.base_policy import BasePolicy
 
 
 def policy(**kwargs):
-    """Creates a suitable breadth-first search based greedy policy for a given
-    environment.
+    """Creates a suitable BFS-based greedy policy for a given environment.
 
     Returns:
         BasePolicy: BFS-based greedy policy.
@@ -34,6 +33,13 @@ class BFSGraphGreedyPolicy(BasePolicy):
     """
 
     def __init__(self, env, graph):
+        """Initialize policy from environment.
+
+        Args:
+            env (pettingzoo.utils.env.AECEnv): Environment on which to base
+                policy.
+            graph (nx.Graph): Graph used by environment.
+        """
         assert env.metadata["name"] == "graph_collector", (
             f"{self.__class__.__name__} is only compatible with "
             "graph_collector."
