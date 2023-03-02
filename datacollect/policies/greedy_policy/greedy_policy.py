@@ -92,7 +92,7 @@ class GraphGreedyPolicy(BasePolicy):
         shortest_len_paths (dict): Cached shortest paths including path
             lengths for all node pairs.
         cur_goals (dict): Cached goals for each agent consisting of
-            (path,cheating, point_idx) tuples keyed by agent name.
+            (path, collected, point_idx) tuples keyed by agent name.
     """
 
     def __init__(self, env):
