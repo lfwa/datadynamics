@@ -60,13 +60,15 @@ def from_image_array(image_array, inverted=False):
     return list(point_labels)
 
 
-def from_coordinates(coordinates, width, height, flip_y=True):
+def from_coordinates(coordinates, width, height, bounding_box, flip_y=True):
     """Returns point labels from coordinates in a width x height grid.
 
     Args:
         coordinates (list[np.ndarray]): List of 2D coordinates.
         width (int): Width of grid.
         height (int): Height of grid.
+        bounding_box (tuple(float)): Bounding box of grid (lat_min, long_min,
+            lat_max, long_max).
         flip_y (bool, optional): Flip y coordinates. Defaults to True.
 
     Returns:
@@ -75,10 +77,8 @@ def from_coordinates(coordinates, width, height, flip_y=True):
     # Latitude, longitude are reversed from x, y coordinates!
     coordinates = np.array(coordinates)
     coordinates = np.flip(coordinates, axis=1)
-    x_min = coordinates[:, 0].min()
-    y_min = coordinates[:, 1].min()
-    x_max = coordinates[:, 0].max()
-    y_max = coordinates[:, 1].max()
+    # Have to flip bounding box too to fit x, y coordinates.
+    y_min, x_min, y_max, x_max = bounding_box
     x_range = x_max - x_min
     y_range = y_max - y_min
     x_step = x_range / width
