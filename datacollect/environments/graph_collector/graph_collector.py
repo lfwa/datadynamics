@@ -61,12 +61,13 @@ class raw_env(AECEnv):
         init_agent_labels,
         max_collect,
         nodes_per_row=None,
-        cheating_cost=lambda node_label: 500 * 0.5,
+        cheating_cost=lambda point_label: 500 * 0.5,
         collection_reward=lambda point_label: 100,
         reveal_cheating_cost=True,
         reveal_collection_reward=True,
         static_graph=True,
         dynamic_display=False,
+        seed=None,
         render_mode=None,
     ):
         """Initializes the graph collector environment.
@@ -105,6 +106,8 @@ class raw_env(AECEnv):
                 movement. Defaults to True.
             dynamic_display (bool, optional): Whether to dynamically adjust
                 the display size to the graph size. Defaults to False.
+            seed (int, optional): Seed for random number generator. Defaults
+                to None.
             render_mode (str, optional): Render mode. Supported modes are
                 specified in environment's metadata["render_modes"] dict.
                 Defaults to None.
@@ -145,7 +148,7 @@ class raw_env(AECEnv):
             gymnasium.logger.warn("Some points overlap and will be merged!")
 
         gymnasium.logger.info(" - Seeding environment...")
-        self.seed()
+        self.seed(seed)
 
         self.graph = graph
         # Remove duplicate points.

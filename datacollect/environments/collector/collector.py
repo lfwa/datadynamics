@@ -64,6 +64,7 @@ class raw_env(AECEnv):
         collection_reward=lambda point: 100,
         reveal_cheating_cost=True,
         reveal_collection_reward=True,
+        seed=None,
         render_mode=None,
     ):
         """Initialize environment.
@@ -89,6 +90,8 @@ class raw_env(AECEnv):
             reveal_collection_reward (bool, optional): Whether to reveal the
                 collection rewards to the agent in observations. Defaults to
                 True.
+            seed (int, optional): Seed for random number generator. Defaults
+                to None.
             render_mode (str, optional): Render mode. Supported modes are
                 specified in environment's metadata["render_modes"] dict.
                 Defaults to None.
@@ -100,7 +103,7 @@ class raw_env(AECEnv):
             f"Supported modes: {self.metadata['render_modes']}"
         )
 
-        self.seed()
+        self.seed(seed)
 
         self.point_positions = point_positions
         self.agent_positions = init_agent_positions
