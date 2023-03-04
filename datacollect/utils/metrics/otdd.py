@@ -1,5 +1,6 @@
 import pickle
 
+import tqdm
 from otdd.pytorch.datasets import dataset_from_numpy
 from otdd.pytorch.distance import DatasetDistance
 
@@ -47,7 +48,7 @@ def otdd(
     completed_timestamps = []
     distances = []
 
-    for i in range(1, n1 + 1):
+    for i in tqdm.tqdm(range(1, n1 + 1), desc="Computing OTDD"):
         try:
             d1 = dataset_from_numpy(d1_feats[:i], d1_targets[:i])
             d2 = dataset_from_numpy(d2_feats[:i], d2_targets[:i])
