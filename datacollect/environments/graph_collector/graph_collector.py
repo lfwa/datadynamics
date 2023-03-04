@@ -216,6 +216,7 @@ class raw_env(AECEnv):
 
         # The following are set in reset().
         self.iteration = 0
+        self.total_points_collected = 0
         self.points = None
         self.agent_selection = None
         self.has_reset = False
@@ -686,6 +687,7 @@ class raw_env(AECEnv):
         self.points = self._create_points(self._point_labels)
 
         self.iteration = 0
+        self.total_points_collected = 0
         self.has_reset = True
         self.terminate = False
         self.truncate = False
@@ -741,7 +743,10 @@ class raw_env(AECEnv):
 
             if action == -1:
                 # Collect point.
-                collector.collect(self.points[cur_node])
+                collector.collect(
+                    self.points[cur_node], self.total_points_collected
+                )
+                self.total_points_collected += 1
             else:
                 # Move agent to the new node label.
                 collector.move(

@@ -150,6 +150,7 @@ class raw_env(AECEnv):
 
         # The following are set in reset().
         self.iteration = 0
+        self.total_points_collected = 0
         self.points = None
         self.agent_selection = None
         self.has_reset = False
@@ -560,6 +561,7 @@ class raw_env(AECEnv):
         )
 
         self.iteration = 0
+        self.total_points_collected = 0
         self.has_reset = True
         self.terminate = False
         self.truncate = False
@@ -605,7 +607,8 @@ class raw_env(AECEnv):
             # Move collector to point position.
             collector.move(point_to_collect.position)
             # Only collect point after reward has been calculated.
-            collector.collect(point_to_collect)
+            collector.collect(point_to_collect, self.total_points_collected)
+            self.total_points_collected += 1
         else:
             reward = 0
 

@@ -38,6 +38,9 @@ pandas = "^1.5.3"
 importlib-resources = "^5.12.0"
 vidmaker = "^2.3.0"
 tqdm = "^4.64.1"
+geomloss = {git = "https://github.com/lfwa/geomloss.git"}
+otdd = {git = "https://github.com/lfwa/otdd.git"}
+h5py = "^3.8.0"
 
 [tool.isort]
 profile = "black"

@@ -269,13 +269,13 @@ class Collector(Position):
         self.path_positions.append(position)
         self.moves += 1
 
-    def collect(self, point):
+    def collect(self, point, timestamp):
         """Collects a point.
 
         Args:
             point (Point): Point to collect.
         """
-        self.points.append(point)
+        self.points.append((point, timestamp))
         self.total_points_collected += 1
         if point.is_collected():
             self.cheated += 1

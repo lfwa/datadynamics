@@ -57,7 +57,8 @@ class PremadePolicy(BasePolicy):
             "agents."
         )
         for agent, key in zip(env.possible_agents, goal_dict):
-            self.goal_dict[agent] = goal_dict[key]
+            # Copy goals since we pop from them.
+            self.goal_dict[agent] = goal_dict[key][:]
 
     def _bfs_shortest_path(self, source_node, target, graph):
         """Runs BFS to find the shortest path from source to target.
