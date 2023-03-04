@@ -364,7 +364,7 @@ test = ["pytest (>=6)"]
 name = "ffmpeg-python"
 version = "0.2.0"
 description = "Python bindings for FFmpeg - with complex filtering support"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 files = [
@@ -441,7 +441,7 @@ woff = ["brotli (>=1.0.1)", "brotlicffi (>=0.8.0)", "zopfli (>=0.1.4)"]
 name = "future"
 version = "0.18.3"
 description = "Clean single-source support for Python 3 and 2"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
@@ -1262,7 +1262,7 @@ wheel = "*"
 name = "opencv-python"
 version = "4.7.0.72"
 description = "Wrapper package for OpenCV python bindings."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -2330,7 +2330,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 name = "vidmaker"
 version = "2.3.0"
 description = "A python library which simplifies creating and exporting videos."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3"
 files = [
@@ -2440,4 +2440,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "8601cea62720cb17746e1f5d132519c2e094f8ba7f6e4e317781282f644a7377"
+content-hash = "203054aecbad74f45321be2629598a9050c9ce7b89cc522c3aa4d0568986445d"
