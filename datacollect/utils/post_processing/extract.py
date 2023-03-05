@@ -52,9 +52,9 @@ def feats_targets_timestamps(collections, include_timestamps=True):
     feats = []
     targets = []
     for i, feat in enumerate(collections.values()):
-        timestamps += [f[1] for f in feat]
+        timestamps += [f[-1] for f in feat]
         if not include_timestamps:
-            feat = [[f[0]] for f in feat]
+            feat = [f[:-1] for f in feat]
         feats += feat
         targets += [i] * len(feat)
     sort_indices = np.argsort(timestamps)
