@@ -19,6 +19,8 @@ def otdd(
 
     Note:
         We skip any timestamps for which the distance cannot be computed.
+        Also, the OTDD values will likely not be affected by whether or not
+        timestamps are included in the input features.
 
     Args:
         d1_collections_filename (str): The filename of the first collection.

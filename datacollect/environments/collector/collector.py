@@ -17,7 +17,7 @@ POINT_SIZE = 8
 PATH_SIZE = 2
 COLLECTOR_SIZE = 4
 COLLECTOR_LEN = 10
-FONT_SIZE = 20
+FONT_SIZE = 12
 
 
 def env(**kwargs):
@@ -638,6 +638,10 @@ class raw_env(AECEnv):
             self.render()
 
     def render(self):
+        assert (
+            self.has_reset
+        ), "Environment has not been reset yet. Call env.reset() first."
+
         if self.render_mode is None:
             gymnasium.logger.warn(
                 f"No render mode specified, skipping render. Please "
