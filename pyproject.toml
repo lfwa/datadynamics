@@ -34,7 +34,7 @@ pre-commit = "^2.21.0"
 mkdocs = "^1.4.2"
 mkdocs-material = "^9.0.12"
 pymdown-extensions = "^9.9.2"
-mkdocstrings = { extras = ["python"], version = "^0.19.1" }
+mkdocstrings = { extras = ["python"], version = "^0.20.0" }
 importlib-metadata = "^6.0.0"
 
 
