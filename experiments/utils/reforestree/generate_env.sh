@@ -22,29 +22,34 @@ done
 
 DIR="${save_dir}/${width}x${height}"
 
-mkdir -p "${DIR}/env"
-mkdir -p "${DIR}/env/reward_maps"
-for reward_mode in "uniform" "knn" "lava"; do
-    mkdir -p "${DIR}/env/cheat_maps/${reward_mode}"
+for mode in "val_dataset" "col_dataset"; do
+    ENV_DIR="${DIR}/env/${mode}"
+    mkdir -p $ENV_DIR
+
+    poetry run python -m scripts.graph.generate_graph \
+        --input_file $mask_file \
+        --output_file "${ENV_DIR}/obstacle_graph.pkl" \
+        --metadata "${ENV_DIR}/obstacle_graph_metadata.json" \
+        --resize $width $height
+
+    poetry run python -m experiments.utils.reforestree.generate_points_data \
+        --final_dataset_file $final_dataset_file \
+        --grid_width $width \
+        --grid_height $height \
+        --locality "${locality}" \
+        --train_limit $train_limit \
+        --test_limit $test_limit \
+        --output_point_labels_file "${ENV_DIR}/point_labels.pkl" \
+        --output_data_file "${ENV_DIR}/data.pkl" \
+        --mode $mode
+
+    mkdir -p "${ENV_DIR}/reward_maps"
+    for reward_mode in "uniform" "knn" "lava"; do
+        mkdir -p "${ENV_DIR}/cheat_maps/${reward_mode}"
+    done
+
+    poetry run python -m experiments.utils.reforestree.generate_reward_cheat_maps \
+        --point_labels_file "${ENV_DIR}/point_labels.pkl" \
+        --data_file "${ENV_DIR}/data.pkl" \
+        --save_dir "${ENV_DIR}"
 done
-
-poetry run python -m scripts.graph.generate_graph \
-    --input_file $mask_file \
-    --output_file "${DIR}/env/obstacle_graph.pkl" \
-    --metadata "${DIR}/env/obstacle_graph_metadata.json" \
-    --resize $width $height
-
-poetry run python -m experiments.utils.reforestree.generate_points_data \
-    --final_dataset_file $final_dataset_file \
-    --grid_width $width \
-    --grid_height $height \
-    --locality "${locality}" \
-    --train_limit $train_limit \
-    --test_limit $test_limit \
-    --output_point_labels_file "${DIR}/env/point_labels.pkl" \
-    --output_data_file "${DIR}/env/data.pkl"
-
-poetry run python -m experiments.utils.reforestree.generate_reward_cheat_maps \
-    --point_labels_file "${DIR}/env/point_labels.pkl" \
-    --data_file "${DIR}/env/data.pkl" \
-    --save_dir "${DIR}"

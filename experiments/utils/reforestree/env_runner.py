@@ -22,8 +22,11 @@ def main(args):
     with open(args.point_labels_file, "rb") as f:
         point_labels = pickle.load(f)
 
-    init_agent_labels = [6050, 83950]
-    max_collect = [122, 122]
+    rng = np.random.default_rng(args.seed)
+    init_agent_labels = [
+        rng.integers(low=0, high=nodes_per_row * nodes_per_row - 1)
+    ]
+    max_collect = [len(set(point_labels))]
 
     if args.mode == "screenshot":
         from PIL import Image
@@ -31,8 +34,8 @@ def main(args):
         env = graph_collector_v0.env(
             graph=graph,
             point_labels=point_labels,
-            init_agent_labels=init_agent_labels,
-            max_collect=max_collect,
+            init_agent_labels=[0],
+            max_collect=[0],
             nodes_per_row=nodes_per_row,
             dynamic_display=True,
             seed=42,
@@ -150,6 +153,12 @@ if __name__ == "__main__":
         type=str,
         help="File storing collection reward map",
         default=None,
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        help="Random seed",
+        default=42,
     )
     args = parser.parse_args()
 

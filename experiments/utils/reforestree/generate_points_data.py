@@ -11,6 +11,7 @@ def main(args):
         locality=args.locality,
         train_limit=args.train_limit,
         test_limit=args.test_limit,
+        mode=args.mode,
     )
 
     with open(args.output_data_file, "wb") as f:
@@ -23,7 +24,7 @@ def main(args):
     # We will only simulate on X_train since those are the ones we retrieve
     # values for with KNN-shapley and LAVA.
     coords, lat_min, long_min, lat_max, long_max = parse_data.extract_coords(
-        X_train
+        X_train, mode=args.mode
     )
 
     point_labels = point_extractor.from_coordinates(
@@ -92,6 +93,12 @@ if __name__ == "__main__":
         type=str,
         help="Output file to save X_train, y_train, X_test, y_test tuple to",
         default="data.pkl",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["val_dataset", "col_dataset"],
+        help="Mode to extract data from",
+        required=True,
     )
     args = parser.parse_args()
 

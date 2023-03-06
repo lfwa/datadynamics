@@ -51,14 +51,12 @@ def main(args):
         y_test=y_test,
         new_min=reward_min,
         new_max=reward_max,
-        save_file=f"{args.save_dir}/env/reward_maps/lava.pkl",
+        save_file=f"{args.save_dir}/reward_maps/lava.pkl",
     )
 
     for reward_mode in reward_modes:
         reward_map = collection_reward_maps[reward_mode]
-        with open(
-            f"{args.save_dir}/env/reward_maps/{reward_mode}.pkl", "wb"
-        ) as f:
+        with open(f"{args.save_dir}/reward_maps/{reward_mode}.pkl", "wb") as f:
             pickle.dump(reward_map, f)
 
     # Generate cheating cost maps.
@@ -97,7 +95,7 @@ def main(args):
             cheating_map = cheating_cost_maps[cheating_cost_mode][reward_mode]
             with open(
                 (
-                    f"{args.save_dir}/env/cheat_maps/{reward_mode}/"
+                    f"{args.save_dir}/cheat_maps/{reward_mode}/"
                     f"{cheating_cost_mode}.pkl"
                 ),
                 "wb",

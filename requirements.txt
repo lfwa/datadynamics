@@ -151,9 +151,9 @@ cycler==0.11.0 ; python_version >= "3.10" and python_version < "3.12" \
 ffmpeg-python==0.2.0 ; python_version >= "3.10" and python_version < "3.12" \
     --hash=sha256:65225db34627c578ef0e11c8b1eb528bb35e024752f6f10b78c011f6f64c4127 \
     --hash=sha256:ac441a0404e053f8b6a1113a77c0f452f1cfc62f6344a769475ffdc0f56c23c5
-fonttools==4.38.0 ; python_version >= "3.10" and python_version < "3.12" \
-    --hash=sha256:2bb244009f9bf3fa100fc3ead6aeb99febe5985fa20afbfbaa2f8946c2fbdaf1 \
-    --hash=sha256:820466f43c8be8c3009aef8b87e785014133508f0de64ec469e4efb643ae54fb
+fonttools==4.39.0 ; python_version >= "3.10" and python_version < "3.12" \
+    --hash=sha256:909c104558835eac27faeb56be5a4c32694192dca123d073bf746ce9254054af \
+    --hash=sha256:f5e764e1fd6ad54dfc201ff32af0ba111bcfbe0d05b24540af74c63db4ed6390
 future==0.18.3 ; python_version >= "3.10" and python_version < "3.12" \
     --hash=sha256:34a17436ed1e96697a86f9de3d15a3b0be01d8bc8de9c1dffd59fb8234ed5307
 geomloss @ git+https://github.com/lfwa/geomloss.git@HEAD ; python_version >= "3.10" and python_version < "3.12"
@@ -637,9 +637,9 @@ scipy==1.10.1 ; python_version >= "3.10" and python_version < "3.12" \
 seaborn==0.12.2 ; python_version >= "3.10" and python_version < "3.12" \
     --hash=sha256:374645f36509d0dcab895cba5b47daf0586f77bfe3b36c97c607db7da5be0139 \
     --hash=sha256:ebf15355a4dba46037dfd65b7350f014ceb1f13c05e814eda2c9f5fd731afc08
-setuptools==67.5.0 ; python_version >= "3.10" and python_version < "3.12" and platform_system == "Linux" \
-    --hash=sha256:113ff8d482b826d2f3b99f26adb1fe505e526a94a08e68cdf392d1dff9ce0595 \
-    --hash=sha256:9f0004c0daa3d41ef4465934a89498da3eef994039f48845d6eb8202aa13b2e9
+setuptools==67.5.1 ; python_version >= "3.10" and python_version < "3.12" and platform_system == "Linux" \
+    --hash=sha256:15136a251127da2d2e77ac7a1bc231eb504654f7e3346d93613a13f2e2787535 \
+    --hash=sha256:1c39d42bda4cb89f7fdcad52b6762e3c309ec8f8715b27c684176b7d71283242
 six==1.16.0 ; python_version >= "3.10" and python_version < "3.12" \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
