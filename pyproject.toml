@@ -7,6 +7,7 @@ readme = "README.md"
 license = "BSD-3-Clause"
 homepage = "https://lfwa.github.io/datacollect/"
 repository = "https://github.com/lfwa/datacollect"
+exclude = ["experiments"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
@@ -15,13 +16,13 @@ pygame = "^2.1.2"
 numpy = "^1.24.2"
 gymnasium = "^0.27.1"
 matplotlib = "^3.6.3"
-networkx = {extras = ["default"], version = "^3.0"}
+networkx = { extras = ["default"], version = "^3.0" }
 pillow = "^9.4.0"
 tqdm = "^4.65.0"
 vidmaker = "^2.3.0"
-geomloss = {git = "https://github.com/lfwa/geomloss.git"}
+geomloss = { git = "https://github.com/lfwa/geomloss.git" }
 h5py = "^3.8.0"
-otdd = {git = "https://github.com/lfwa/otdd.git"}
+otdd = { git = "https://github.com/lfwa/otdd.git" }
 
 
 [tool.poetry.group.dev.dependencies]

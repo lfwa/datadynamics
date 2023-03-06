@@ -133,3 +133,7 @@ dmypy.json
 
 # VS code
 .vscode/
+
+# Experiment results
+*.mp4
+*.pkl
