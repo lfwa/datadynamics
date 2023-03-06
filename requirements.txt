@@ -650,9 +650,9 @@ scipy==1.10.1 ; python_version >= "3.10" and python_version < "3.12" \
 seaborn==0.12.2 ; python_version >= "3.10" and python_version < "3.12" \
     --hash=sha256:374645f36509d0dcab895cba5b47daf0586f77bfe3b36c97c607db7da5be0139 \
     --hash=sha256:ebf15355a4dba46037dfd65b7350f014ceb1f13c05e814eda2c9f5fd731afc08
-setuptools==67.4.0 ; python_version >= "3.10" and python_version < "3.12" and platform_system == "Linux" \
-    --hash=sha256:e5fd0a713141a4a105412233c63dc4e17ba0090c8e8334594ac790ec97792330 \
-    --hash=sha256:f106dee1b506dee5102cc3f3e9e68137bbad6d47b616be7991714b0c62204251
+setuptools==67.5.0 ; python_version >= "3.10" and python_version < "3.12" and platform_system == "Linux" \
+    --hash=sha256:113ff8d482b826d2f3b99f26adb1fe505e526a94a08e68cdf392d1dff9ce0595 \
+    --hash=sha256:9f0004c0daa3d41ef4465934a89498da3eef994039f48845d6eb8202aa13b2e9
 six==1.16.0 ; python_version >= "3.10" and python_version < "3.12" \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254

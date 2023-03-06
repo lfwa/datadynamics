@@ -64,7 +64,7 @@ def from_coordinates(coordinates, width, height, bounding_box, flip_y=True):
     """Returns point labels from coordinates in a width x height grid.
 
     Args:
-        coordinates (list[np.ndarray]): List of 2D coordinates.
+        coordinates (list[np.ndarray/tuple]): List of 2D coordinates.
         width (int): Width of grid.
         height (int): Height of grid.
         bounding_box (tuple(float)): Bounding box of grid (lat_min, long_min,
