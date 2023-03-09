@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from pettingzoo.test import api_test
 
-from datacollect.environments import graph_collector_v0
+from datadynamics.environments import graph_collector_v0
 
 
 @pytest.mark.parametrize(

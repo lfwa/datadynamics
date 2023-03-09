@@ -1,7 +1,7 @@
 import numpy as np
 
-from datacollect.environments import collector_v0
-from datacollect.policies import dummy_policy_v0
+from datadynamics.environments import collector_v0
+from datadynamics.policies import dummy_policy_v0
 
 
 def test_main():

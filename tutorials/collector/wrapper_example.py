@@ -1,5 +1,5 @@
-from datacollect.environments import collector_v0
-from datacollect.policies import greedy_policy_v0
+from datadynamics.environments import collector_v0
+from datadynamics.policies import greedy_policy_v0
 
 env = collector_v0.env(
     n_points=300, n_agents=2, max_collect=[120, 180], render_mode="human"

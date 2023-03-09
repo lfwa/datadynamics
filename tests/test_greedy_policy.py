@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from datacollect.environments import collector_v0
-from datacollect.policies import greedy_policy_v0
+from datadynamics.environments import collector_v0
+from datadynamics.policies import greedy_policy_v0
 
 
 @pytest.mark.parametrize(

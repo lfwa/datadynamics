@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from datacollect.utils.metrics.otdd import otdd
+from datadynamics.utils.metrics.otdd import otdd
 
 
 def plot_otdd(collections_dir1, collections_dir2, repeats, ax):

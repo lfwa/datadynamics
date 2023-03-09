@@ -1,6 +1,6 @@
 import numpy as np
 
-from datacollect.utils.colors import ColorPicker
+from datadynamics.utils.colors import ColorPicker
 
 colorpicker = ColorPicker()
 

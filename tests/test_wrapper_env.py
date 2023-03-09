@@ -1,6 +1,6 @@
 import pytest
 
-from datacollect.environments import collector_v0
+from datadynamics.environments import collector_v0
 
 
 @pytest.mark.parametrize(

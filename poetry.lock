@@ -1321,7 +1321,7 @@ pynndescent = ["pynndescent (>=0.5.0,<0.6.0)"]
 [[package]]
 name = "otdd"
 version = "0.1.0"
-description = "Optimal Transport Dataset Distance"
+description = ""
 category = "dev"
 optional = false
 python-versions = "*"

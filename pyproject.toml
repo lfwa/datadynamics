@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "Datacollect"
+name = "Datadynamics"
 version = "0.0.1"
 description = "Simulation environment for data collection."
 authors = ["Lasse F. Wolff Anthony <lfwa@proton.me>"]
 readme = "README.md"
 license = "BSD-3-Clause"
-homepage = "https://lfwa.github.io/datacollect/"
-repository = "https://github.com/lfwa/datacollect"
+homepage = "https://lfwa.github.io/datadynamics/"
+repository = "https://github.com/lfwa/datadynamics"
 exclude = ["experiments"]
 
 [tool.poetry.dependencies]
@@ -34,8 +34,8 @@ mkdocs-material = "^9.0.12"
 pymdown-extensions = "^9.9.2"
 mkdocstrings = { extras = ["python"], version = "^0.20.0" }
 importlib-metadata = "^6.0.0"
-geomloss = {git = "https://github.com/lfwa/geomloss.git"}
-otdd = {git = "https://github.com/lfwa/otdd.git"}
+geomloss = { git = "https://github.com/lfwa/geomloss.git" }
+otdd = { git = "https://github.com/lfwa/otdd.git" }
 
 
 [tool.poetry.group.experiments.dependencies]

@@ -1,7 +1,7 @@
 import argparse
 import pickle
 
-from datacollect.utils.graph_utils import point_extractor
+from datadynamics.utils.graph_utils import point_extractor
 from experiments.utils.reforestree import parse_data
 
 

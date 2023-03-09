@@ -1,7 +1,7 @@
 # Scripts
 
 ## Graphs
-Datacollect contains several scripts to generate graphs and point labels from image files to use in the `graph_collector` environment.
+Datadynamics contains several scripts to generate graphs and point labels from image files to use in the `graph_collector` environment.
 
 ### Generate Graphs From Masks
 

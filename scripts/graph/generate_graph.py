@@ -10,14 +10,14 @@ import argparse
 import json
 import pickle
 
-from datacollect.utils.graph_utils import graph_extractor
+from datadynamics.utils.graph_utils import graph_extractor
 
 
 def main(args):
     """Generate graph from obstacle mask file.
 
     Example usage:
-    python -m datacollect.scripts.graph.generate_graph \
+    python -m datadynamics.scripts.graph.generate_graph \
         -i ./data/obstacle_mask.png \
         -o ./data/graph.pkl \
         -m ./data/metadata.json \

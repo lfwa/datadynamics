@@ -3,7 +3,7 @@ import os
 
 import matplotlib.pyplot as plt
 
-from datacollect.utils.metrics.otdd import otdd
+from datadynamics.utils.metrics.otdd import otdd
 
 
 def plot_otdd(collections_filename1, collections_filename2, filter_date, ax):

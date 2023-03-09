@@ -1,8 +1,8 @@
-site_name: Datacollect
-site_url: https://lfwa.github.io/datacollect/
+site_name: Datadynamics
+site_url: https://lfwa.github.io/datadynamics/
 
-repo_name: lfwa/datacollect
-repo_url: https://github.com/lfwa/datacollect
+repo_name: lfwa/datadynamics
+repo_url: https://github.com/lfwa/datadynamics
 
 theme:
   name: material

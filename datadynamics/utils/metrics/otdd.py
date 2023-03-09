@@ -15,7 +15,7 @@ except ImportError:
         "the original repository at https://github.com/microsoft/otdd."
     )
 
-from datacollect.utils.post_processing import extract
+from datadynamics.utils.post_processing import extract
 
 
 def otdd(
@@ -24,14 +24,15 @@ def otdd(
     """Optimal transport dataset distance between two collections over time.
 
     The collections must be of equal length and created using
-    datacollect.utils.post_processing.save_collections. We use Microsoft's
+    datadynamics.utils.post_processing.save_collections. We use Microsoft's
     OTDD library to compute the distance between the collections for each
     timestamp to see how the distance changes over time during the simulation.
 
-    Note:
+    Warning:
         This function requires the OTDD library to be installed which is not
-        included by default in datacollect.
+        included by default in datadynamics.
 
+    Note:
         We skip any timestamps for which the distance cannot be computed.
         Also, the OTDD values will likely not be affected by whether or not
         timestamps are included in the input features.

@@ -3,7 +3,7 @@ from collections import deque
 import gymnasium
 import numpy as np
 
-from datacollect.policies.base_policy.base_policy import BasePolicy
+from datadynamics.policies.base_policy.base_policy import BasePolicy
 
 
 def policy(**kwargs):

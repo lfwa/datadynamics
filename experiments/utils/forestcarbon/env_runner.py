@@ -6,9 +6,9 @@ import numpy as np
 import tqdm
 import vidmaker
 
-from datacollect.environments import graph_collector_v0
-from datacollect.policies import bfs_greedy_policy_v0, premade_policy_v0
-from datacollect.utils.post_processing import extract
+from datadynamics.environments import graph_collector_v0
+from datadynamics.policies import bfs_greedy_policy_v0, premade_policy_v0
+from datadynamics.utils.post_processing import extract
 
 
 def main(args):

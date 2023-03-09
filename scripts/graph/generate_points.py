@@ -8,14 +8,14 @@ can be converted to one.
 import argparse
 import pickle
 
-from datacollect.utils.graph_utils import point_extractor
+from datadynamics.utils.graph_utils import point_extractor
 
 
 def main(args):
     """Generate point labels from point mask file.
 
     Example usage:
-    python -m datacollect.scripts.graph.generate_points \
+    python -m datadynamics.scripts.graph.generate_points \
         -i ./data/point_mask.png \
         -o ./data/point_labels.pkl \
         -rs 100 100
