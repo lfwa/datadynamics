@@ -27,7 +27,7 @@ otdd = { git = "https://github.com/lfwa/otdd.git" }
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^6.0.0"
-black = "^22.12.0"
+black = "^23.1.0"
 pytest = "^7.2.0"
 isort = "^5.12.0"
 pre-commit = "^3.1.1"
