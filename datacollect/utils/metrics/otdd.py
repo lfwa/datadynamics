@@ -1,8 +1,19 @@
 import pickle
 
 import tqdm
-from otdd.pytorch.datasets import dataset_from_numpy
-from otdd.pytorch.distance import DatasetDistance
+
+try:
+    from otdd.pytorch.datasets import dataset_from_numpy
+    from otdd.pytorch.distance import DatasetDistance
+except ImportError:
+    raise ImportError(
+        "OTDD or one of its dependecies (likely geomloss) is not installed. "
+        "These packages are included in the poetry dev dependencies."
+        "Alternatively, you can install geomloss through the fork hosted at "
+        "https://github.com/lfwa/geomloss or the original repository at "
+        "https://github.com/jeanfeydy/geomloss. Similarly, you can install OTDD through the fork hosted at https://github.com/lfwa/otdd.git or "
+        "the original repository at https://github.com/microsoft/otdd."
+    )
 
 from datacollect.utils.post_processing import extract
 
@@ -18,6 +29,9 @@ def otdd(
     timestamp to see how the distance changes over time during the simulation.
 
     Note:
+        This function requires the OTDD library to be installed which is not
+        included by default in datacollect.
+
         We skip any timestamps for which the distance cannot be computed.
         Also, the OTDD values will likely not be affected by whether or not
         timestamps are included in the input features.

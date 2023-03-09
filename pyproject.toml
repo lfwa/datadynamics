@@ -20,9 +20,7 @@ networkx = { extras = ["default"], version = "^3.0" }
 pillow = "^9.4.0"
 tqdm = "^4.65.0"
 vidmaker = "^2.3.0"
-geomloss = { git = "https://github.com/lfwa/geomloss.git" }
 h5py = "^3.8.0"
-otdd = { git = "https://github.com/lfwa/otdd.git" }
 
 
 [tool.poetry.group.dev.dependencies]
@@ -36,6 +34,8 @@ mkdocs-material = "^9.0.12"
 pymdown-extensions = "^9.9.2"
 mkdocstrings = { extras = ["python"], version = "^0.20.0" }
 importlib-metadata = "^6.0.0"
+geomloss = {git = "https://github.com/lfwa/geomloss.git"}
+otdd = {git = "https://github.com/lfwa/otdd.git"}
 
 
 [tool.poetry.group.experiments.dependencies]
