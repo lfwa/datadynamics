@@ -26,7 +26,7 @@ Visit the documentation site at [lfwa.github.io/datacollect/](https://lfwa.githu
 ### Quick Start
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lfwa/datacollect/main/datacollect.gif" width="350px"/>
+    <img src="https://raw.githubusercontent.com/lfwa/datacollect/main/datacollect.gif" width="400px"/>
 </p>
 
 ```python
