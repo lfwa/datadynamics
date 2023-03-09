@@ -1,4 +1,4 @@
-# Simulating Data Collection in a 2D Plane
+# Simulating Data Collection Dynamcs in a 2D Plane
 
 In this tutorial, we will explore how to use datadynamics to simulate data collection tasks in a 2D plane environment.
 

@@ -1,6 +1,6 @@
-# Simulating Data Collection with a Graph
+# Simulating Data Collection Dynamics with a Graph
 
-In this tutorial, we will explore how to use Datacollect to simulate data collection tasks in a graph-based environment.
+In this tutorial, we will explore how to use datadynamics to simulate data collection tasks in a graph-based environment.
 
 
 ## Graph-based Environments
@@ -11,7 +11,7 @@ A graph-based environment is also a simpler alternative to a navigation mesh (na
 
 ## Defining a Graph
 
-In Datacollect, graphs should be encoded as a weighted (directed or undirected) graph using the [NetworkX](https://networkx.org/) library.
+In datadynamics, graphs should be encoded as a weighted (directed or undirected) graph using the [NetworkX](https://networkx.org/) library.
 Each node in the graph represents a location that the agents can occupy, and each edge represents a connection between two locations.
 The weight of an edge represents the cost (negated reward) of traversing it.
 
