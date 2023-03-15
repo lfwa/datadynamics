@@ -1,17 +1,18 @@
 # Simulating Data Collection Dynamics with a Graph
 
-In this tutorial, we will explore how to use datadynamics to simulate data collection tasks in a graph-based environment.
+In this tutorial, we will explore how to use Datadynamics to simulate data collection tasks in a graph-based environment.
 
 
 ## Graph-based Environments
 
-Graph-based environments are environments where the underlying structure or space in which the agents operate is represented as a graph.
-Graph-based environments can be useful for encoding obstacles or constraints in the underlying data environment or process.
-A graph-based environment is also a simpler alternative to a navigation mesh (navmesh) and similarly allows for creating agent policies for pathfinding through complicated spaces.
+The graph-based environment encodes its structure as a weighted and possibly directed graph, supporting both an underlying dynamic and changing graph as well as static graphs.
+Agents can traverse the graph to collect data points for rewards, where the cost of traversing is determined by the edge weights.
+The graph encoding enables the creation of almost all environment structures, including the approximation of the plane-based environment through a grid or navigation mesh-like structure.
+However, this comes at a performance cost due to the increased number of objects to render and the often high time complexity of graph algorithms used for pathfinding in some policies.
 
 ## Defining a Graph
 
-In datadynamics, graphs should be encoded as a weighted (directed or undirected) graph using the [NetworkX](https://networkx.org/) library.
+In Datadynamics, graphs should be encoded as a weighted (directed or undirected) graph using the [NetworkX](https://networkx.org/) library.
 Each node in the graph represents a location that the agents can occupy, and each edge represents a connection between two locations.
 The weight of an edge represents the cost (negated reward) of traversing it.
 
