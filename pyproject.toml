@@ -41,7 +41,7 @@ otdd = { git = "https://github.com/lfwa/otdd.git" }
 [tool.poetry.group.experiments.dependencies]
 pandas = "^1.5.3"
 importlib-resources = "^5.12.0"
-torch = "^1.13.1"
+torch = ">=1.13.1,<3.0.0"
 scipy = "^1.10.1"
 
 [tool.isort]
