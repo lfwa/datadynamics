@@ -31,7 +31,7 @@ isort = "^5.12.0"
 pre-commit = "^3.1.1"
 mkdocs = "^1.4.2"
 mkdocs-material = "^9.0.12"
-pymdown-extensions = "^9.9.2"
+pymdown-extensions = ">=9.9.2,<11.0.0"
 mkdocstrings = { extras = ["python"], version = "^0.20.0" }
 importlib-metadata = "^6.0.0"
 geomloss = { git = "https://github.com/lfwa/geomloss.git" }
